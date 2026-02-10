@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CryptoLand | Твой виртуальный крипто-мегаполис</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+</head>
+<body>
+    <!-- Прелоадер -->
+    <div class="preloader" id="preloader">
+        <div class="preloader-content">
+            <div class="preloader-logo">
+                <div class="logo-circle"></div>
+                <div class="logo-text">CRYPTOLAND</div>
+            </div>
+            <div class="preloader-progress">
+                <div class="progress-bar"></div>
+            </div>
+            <p class="preloader-subtitle">Загрузка крипто-мегаполиса...</p>
+        </div>
+    </div>
+
+    <div class="app-container">
+        <!-- Боковое меню - УСИЛЕННОЕ -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-wrapper">
+                    <img src="assets/logo.png" alt="CryptoLand" class="sidebar-logo" id="appLogo">
+                    <div class="logo-text-wrapper">
+                        <h1 class="logo-title">CRYPTOLAND</h1>
+                        <p class="logo-subtitle">КРИПТО-МЕГАПОЛИС</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="user-card" id="userCard">
+                <div class="user-avatar">
+                    <i class="fas fa-user-tie"></i>
+                </div>
+                <div class="user-info">
+                    <h3 class="user-name" id="userName">Гость</h3>
+                    <p class="user-role">Мэр</p>
+                </div>
+                <div class="user-status" id="userStatus">
+                    <div class="status-dot offline"></div>
+                </div>
+            </div>
+
+            <!-- УСИЛЕННАЯ НАВИГАЦИЯ -->
+            <div class="sidebar-nav">
+                <a href="#dashboard" class="nav-item active" data-tab="dashboard">
+                    <i class="fas fa-city"></i>
+                    <span class="nav-text">Панель мэра</span>
+                    <span class="nav-arrow"><i class="fas fa-chevron-right"></i></span>
+                </a>
+                <a href="#districts" class="nav-item" data-tab="districts">
+                    <i class="fas fa-building"></i>
+                    <span class="nav-text">Мои районы</span>
+                    <span class="nav-badge" id="depositCount">0</span>
+                </a>
+                <a href="#treasury" class="nav-item" data-tab="treasury">
+                    <i class="fas fa-vault"></i>
+                    <span class="nav-text">Городская казна</span>
+                </a>
+                <a href="#tax" class="nav-item" data-tab="tax">
+                    <i class="fas fa-chart-network"></i>
+                    <span class="nav-text">Налоговая</span>
+                </a>
+                <a href="#rankings" class="nav-item" data-tab="rankings">
+                    <i class="fas fa-trophy"></i>
+                    <span class="nav-text">Рейтинг мэров</span>
+                </a>
+            </div>
+
+
+            <div class="sidebar-footer">
+                <div class="wallet-section">
+                    <div class="wallet-info">
+                        <p class="wallet-label">Баланс USDT</p>
+                        <h3 class="wallet-balance" id="sidebarBalance">0.00</h3>
+                    </div>
+                    <button class="wallet-connect-btn" id="sidebarConnectBtn">
+                        <i class="fas fa-wallet"></i>
+                        <span>Подключить кошелек</span>
+                    </button>
+                </div>
+                <div class="social-section">
+                    <a href="https://t.me/cryptoland_city" target="_blank" class="social-btn telegram-btn">
+                        <i class="fab fa-telegram"></i>
+                        <span>Telegram</span>
+                    </a>
+                    <button class="social-btn support-btn" id="supportBtn">
+                        <i class="fas fa-headset"></i>
+                        <span>Support</span>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Основной контент -->
+        <main class="main-content">
+            <!-- УСИЛЕННАЯ ШАПКА -->
+            <header class="content-header">
+                <div class="header-left">
+                    <div class="breadcrumb">
+                        <span class="breadcrumb-item">Главная</span>
+                        <i class="fas fa-chevron-right"></i>
+                        <span class="breadcrumb-item active" id="currentPage">Панель мэра</span>
+                    </div>
+                    <h2 class="page-title" id="pageTitle">Панель мэра</h2>
+                </div>
+                <div class="header-right">
+                    <div class="quick-actions">
+                        <button class="quick-action-btn" id="refreshData">
+                            <i class="fas fa-sync-alt"></i>
+                            Обновить
+                        </button>
+                        <button class="quick-action-btn" id="buyUsdtBtn">
+                            <i class="fas fa-shopping-cart"></i>
+                            Купить USDT
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Панель мэра (Главная) - УСИЛЕННАЯ -->
+            <section class="content-section active" id="dashboard">
+                <div class="dashboard-hero">
+                    <div class="hero-content">
+                        <h3 class="hero-title">СТРОЙТЕ СВОЙ КРИПТО-МЕГАПОЛИС</h3>
+                        <p class="hero-description">Инвестируйте в виртуальные районы, получайте ежедневный доход и поднимайтесь в рейтинге мэров</p>
+                        <div class="hero-stats">
+                            <div class="hero-stat">
+                                <div class="stat-number" id="heroTotalInvested">0</div>
+                                <div class="stat-label">Всего инвестировано</div>
+                            </div>
+                            <div class="hero-stat">
+                                <div class="stat-number" id="heroDailyIncome">0</div>
+                                <div class="stat-label">Ежедневный доход</div>
+                            </div>
+                            <div class="hero-stat">
+                                <div class="stat-number" id="heroReferrals">0</div>
+                                <div class="stat-label">Приглашенных</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- УСИЛЕННЫЕ КАРТОЧКИ ТАРИФОВ -->
+                <div class="tariffs-section">
+                    <div class="section-header">
+                        <div class="header-title-wrapper">
+                            <i class="fas fa-crown section-icon"></i>
+                            <h3 class="section-title">ДОСТУПНЫЕ РАЙОНЫ ДЛЯ ИНВЕСТИЦИЙ</h3>
+                        </div>
+                        <p class="section-description">Выберите район для развития вашего мегаполиса. Чем выше уровень - тем больше доходность.</p>
+                    </div>
+
+                    <div class="tariffs-grid" id="tariffsGrid">
+                        <!-- Тарифы будут загружены динамически -->
+                    </div>
+                </div>
+
+                <!-- БЫСТРАЯ НАВИГАЦИЯ -->
+                <div class="quick-navigation">
+                    <div class="nav-card" data-tab="districts">
+                        <div class="nav-icon">
+                            <i class="fas fa-building"></i>
+                        </div>
+                        <div class="nav-content">
+                            <h4>Мои районы</h4>
+                            <p>Управляйте вашими инвестициями</p>
+                        </div>
+                        <div class="nav-arrow">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </div>
+                    <div class="nav-card" data-tab="treasury">
+                        <div class="nav-icon">
+                            <i class="fas fa-vault"></i>
+                        </div>
+                        <div class="nav-content">
+                            <h4>Городская казна</h4>
+                            <p>Выводите средства и следите за балансами</p>
+                        </div>
+                        <div class="nav-arrow">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </div>
+                    <div class="nav-card" data-tab="tax">
+                        <div class="nav-icon">
+                            <i class="fas fa-chart-network"></i>
+                        </div>
+                        <div class="nav-content">
+                            <h4>Налоговая</h4>
+                            <p>Реферальная система и бонусы</p>
+                        </div>
+                        <div class="nav-arrow">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </div>
+                    <div class="nav-card" data-tab="rankings">
+                        <div class="nav-icon">
+                            <i class="fas fa-trophy"></i>
+                        </div>
+                        <div class="nav-content">
+                            <h4>Рейтинг мэров</h4>
+                            <p>Соревнуйтесь с другими мэрами</p>
+                        </div>
+                        <div class="nav-arrow">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Мои районы - УЛУЧШЕННАЯ -->
+            <section class="content-section" id="districts">
+                <div class="section-header">
+                    <div class="header-title-wrapper">
+                        <i class="fas fa-building section-icon"></i>
+                        <h3 class="section-title">МОИ РАЙОНЫ</h3>
+                    </div>
+                    <p class="section-description">Здесь отображаются все ваши активные и завершенные инвестиции</p>
+                </div>
+
+
+                <!-- УЛУЧШЕННЫЕ ФИЛЬТРЫ -->
+                <div class="filter-section">
+                    <div class="filter-tabs">
+                        <button class="filter-tab active" data-filter="all">
+                            <i class="fas fa-layer-group"></i>
+                            Все районы
+                        </button>
+                        <button class="filter-tab" data-filter="active">
+                            <i class="fas fa-play-circle"></i>
+                            Активные
+                        </button>
+                        <button class="filter-tab" data-filter="finished">
+                            <i class="fas fa-check-circle"></i>
+                            Завершенные
+                        </button>
+                    </div>
+                    <div class="filter-actions">
+                        <button class="filter-action-btn" id="refreshDeposits">
+                            <i class="fas fa-sync-alt"></i>
+                            Обновить
+                        </button>
+                        <button class="filter-action-btn primary" id="newInvestmentBtn">
+                            <i class="fas fa-plus-circle"></i>
+                            Новое инвестирование
+                        </button>
+                    </div>
+                </div>
+
+                <div class="deposits-container">
+                    <div class="deposits-grid" id="depositsGrid">
+                        <!-- Депозиты будут загружены динамически -->
+                    </div>
+
+                    <div class="empty-state" id="emptyDeposits">
+                        <div class="empty-icon">
+                            <i class="fas fa-city"></i>
+                        </div>
+                        <h4>У вас пока нет районов</h4>
+                        <p>Начните инвестировать в районы для получения пассивного дохода</p>
+                        <button class="primary-btn large" id="goToInvest">
+                            <i class="fas fa-coins"></i>
+                            Начать инвестировать
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Городская казна - УЛУЧШЕННАЯ -->
+            <section class="content-section" id="treasury">
+                <div class="section-header">
+                    <div class="header-title-wrapper">
+                        <i class="fas fa-vault section-icon"></i>
+                        <h3 class="section-title">ГОРОДСКАЯ КАЗНА</h3>
+                    </div>
+                    <p class="section-description">Управляйте вашими финансами, выводите доход и отслеживайте операции</p>
+                </div>
+
+                <div class="treasury-cards">
+                    <!-- Карточки остаются без изменений -->
+                    <div class="treasury-card">
+                        <div class="card-header income">
+                            <i class="fas fa-home"></i>
+                            <h4>Доход с района</h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="balance-display">
+                                <div class="balance-label">Доступно</div>
+                                <div class="balance-amount" id="treasuryIncome">0.00 USDT</div>
+                            </div>
+                            <div class="balance-info">
+                                <p><i class="fas fa-info-circle"></i> Комиссия на вывод: <strong>15%</strong></p>
+                                <p><i class="fas fa-calendar-day"></i> Вывод: <strong>ежедневно</strong></p>
+                            </div>
+                            <button class="withdraw-btn" id="withdrawIncomeBtn" disabled>
+                                <i class="fas fa-download"></i>
+                                Вывести доход
+                            </button>
+                        </div>
+                    </div>
+
+
+                    <div class="treasury-card">
+                        <div class="card-header tax">
+                            <i class="fas fa-users"></i>
+                            <h4>Налоговые сборы</h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="balance-display">
+                                <div class="balance-label">Доступно</div>
+                                <div class="balance-amount" id="treasuryTax">0.00 USDT</div>
+                            </div>
+                            <div class="balance-info">
+                                <p><i class="fas fa-info-circle"></i> Комиссия на вывод: <strong>0%</strong></p>
+                                <p><i class="fas fa-calendar-day"></i> Вывод: <strong>ежедневно</strong></p>
+                            </div>
+                            <button class="withdraw-btn" id="withdrawTaxBtn" disabled>
+                                <i class="fas fa-download"></i>
+                                Вывести налоги
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="treasury-card">
+                        <div class="card-header deposit">
+                            <i class="fas fa-piggy-bank"></i>
+                            <h4>Стартовый бюджет</h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="balance-display">
+                                <div class="balance-label">Заблокировано</div>
+                                <div class="balance-amount" id="treasuryDeposit">0.00 USDT</div>
+                            </div>
+                            <div class="balance-info">
+                                <p><i class="fas fa-info-circle"></i> Комиссия на вывод: <strong>0%</strong></p>
+                                <p><i class="fas fa-history"></i> Автовывод: <strong>по окончании срока</strong></p>
+                            </div>
+                            <button class="check-btn" id="checkDepositsBtn">
+                                <i class="fas fa-search-dollar"></i>
+                                Проверить завершение
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- УЛУЧШЕННАЯ ТАБЛИЦА ТРАНЗАКЦИЙ -->
+                <div class="transactions-section">
+                    <div class="section-header">
+                        <h4 class="section-title">
+                            <i class="fas fa-history"></i>
+                            ИСТОРИЯ ОПЕРАЦИЙ
+                        </h4>
+                        <div class="section-actions">
+                            <button class="export-btn styled" id="exportTransactions">
+                                <i class="fas fa-file-export"></i>
+                                Экспорт в CSV
+                            </button>
+                        </div>
+                    </div>
+
+
+                    <div class="transactions-table-container">
+                        <table class="transactions-table">
+                            <thead>
+                                <tr>
+                                    <th>Тип операции</th>
+                                    <th>Сумма</th>
+                                    <th>Дата</th>
+                                    <th>Статус</th>
+                                    <th>Хэш транзакции</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transactionsBody">
+                                <tr class="empty-row">
+                                    <td colspan="5">
+                                        <div class="table-empty">
+                                            <i class="fas fa-exchange-alt"></i>
+                                            <p>Транзакций пока нет</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Налоговая - ПОЛНОСТЬЮ ПЕРЕРАБОТАННАЯ -->
+            <section class="content-section" id="tax">
+                <div class="section-header">
+                    <div class="header-title-wrapper">
+                        <i class="fas fa-chart-network section-icon"></i>
+                        <h3 class="section-title">НАЛОГОВАЯ СЛУЖБА</h3>
+                    </div>
+                    <p class="section-description">Реферальная система, налоговые сборы и бонусы мэра</p>
+                </div>
+
+                <!-- УПРОЩЕННЫЙ ИНТЕРФЕЙС -->
+                <div class="referral-simple">
+                    <div class="referral-link-card">
+                        <div class="card-header">
+                            <i class="fas fa-share-alt"></i>
+                            <h4>ВАША РЕФЕРАЛЬНАЯ ССЫЛКА</h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="link-input-group">
+                                <input type="text" class="styled-input" id="refLinkInput" readonly value="Подключите кошелек для получения ссылки">
+                                <button class="copy-btn styled" id="copyRefLink">
+                                    <i class="fas fa-copy"></i>
+                                    Копировать
+                                </button>
+                            </div>
+                            <div class="qr-code-container" id="qrContainer">
+                                <!-- QR код будет здесь -->
+                            </div>
+                            <div class="referral-stats-simple">
+                                <div class="stat-item">
+                                    <i class="fas fa-user-friends"></i>
+                                    <span>Всего приглашено: <strong id="totalReferrals">0</strong></span>
+                                </div>
+                                <div class="stat-item">
+                                    <i class="fas fa-coins"></i>
+                                    <span>Налоги: <strong id="totalTaxes">0 USDT</strong></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ТАБЛИЦА УРОВНЕЙ -->
+                <div class="levels-section">
+                    <div class="section-header">
+                        <h4 class="section-title">
+                            <i class="fas fa-chart-line"></i>
+                            РЕФЕРАЛЬНЫЕ УРОВНИ
+                        </h4>
+                        <div class="section-description">
+                            <p>Уровни обновляются автоматически при достижении условий</p>
+                        </div>
+                    </div>
+
+
+                    <div class="levels-table-container">
+                        <table class="levels-table styled-table">
+                            <thead>
+                                <tr>
+                                    <th>Уровень</th>
+                                    <th>Процент</th>
+                                    <th>Требуемый оборот</th>
+                                    <th>Личный депозит</th>
+                                    <th>Жителей</th>
+                                    <th>Бонус мэра</th>
+                                </tr>
+                            </thead>
+                            <tbody id="levelsBody">
+                                <!-- Уровни будут загружены динамически -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Рейтинг мэров - УЛУЧШЕННАЯ -->
+            <section class="content-section" id="rankings">
+                <div class="section-header">
+                    <div class="header-title-wrapper">
+                        <i class="fas fa-trophy section-icon"></i>
+                        <h3 class="section-title">РЕЙТИНГ МЭРОВ</h3>
+                    </div>
+                    <p class="section-description">Соревнуйтесь с другими мэрами за первое место в рейтинге</p>
+                </div>
+
+                <!-- УЛУЧШЕННЫЕ ФИЛЬТРЫ -->
+                <div class="ranking-filters styled">
+                    <div class="filter-group">
+                        <button class="ranking-filter active" data-type="tax">
+                            <i class="fas fa-coins"></i>
+                            По налоговым сборам
+                        </button>
+                        <button class="ranking-filter" data-type="population">
+                            <i class="fas fa-users"></i>
+                            По населению
+                        </button>
+                        <button class="ranking-filter" data-type="total">
+                            <i class="fas fa-chart-line"></i>
+                            По общему доходу
+                        </button>
+                    </div>
+                    <div class="search-group">
+                        <div class="search-input-wrapper">
+                            <i class="fas fa-search"></i>
+                            <input type="text" class="search-input styled" placeholder="Поиск по адресу..." id="rankingSearch">
+                        </div>
+                        <select class="time-select styled" id="rankingTime">
+                            <option value="all">За все время</option>
+                            <option value="month">За месяц</option>
+                            <option value="week">За неделю</option>
+                            <option value="day">За сутки</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- ТОП-3 МЭРА -->
+                <div class="ranking-top">
+                    <div class="top-place second">
+                        <div class="place-medal">
+                            <i class="fas fa-medal"></i>
+                            <span class="place-number">2</span>
+                        </div>
+                        <div class="place-info">
+                            <div class="place-avatar">
+                                <i class="fas fa-user-tie"></i>
+                            </div>
+                            <div class="place-details">
+                                <h5 class="place-name">Мэр #2</h5>
+                                <p class="place-value" data-type="tax">0 USDT</p>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div class="top-place first">
+                        <div class="place-crown">
+                            <i class="fas fa-crown"></i>
+                        </div>
+                        <div class="place-medal">
+                            <span class="place-number">1</span>
+                        </div>
+                        <div class="place-info">
+                            <div class="place-avatar">
+                                <i class="fas fa-crown"></i>
+                            </div>
+                            <div class="place-details">
+                                <h5 class="place-name">Мэр #1</h5>
+                                <p class="place-value" data-type="tax">0 USDT</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="top-place third">
+                        <div class="place-medal">
+                            <i class="fas fa-medal"></i>
+                            <span class="place-number">3</span>
+                        </div>
+                        <div class="place-info">
+                            <div class="place-avatar">
+                                <i class="fas fa-user-tie"></i>
+                            </div>
+                            <div class="place-details">
+                                <h5 class="place-name">Мэр #3</h5>
+                                <p class="place-value" data-type="tax">0 USDT</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ПОЛНЫЙ РЕЙТИНГ -->
+                <div class="ranking-list">
+                    <div class="ranking-table-container">
+                        <table class="ranking-table styled-table">
+                            <thead>
+                                <tr>
+                                    <th>Место</th>
+                                    <th>Мэр</th>
+                                    <th>Налоги</th>
+                                    <th>Население</th>
+                                    <th>Общий доход</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rankingBody">
+                                <!-- Рейтинг будет загружен -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ВАША ПОЗИЦИЯ -->
+                <div class="user-ranking-card styled">
+                    <div class="user-rank-info">
+                        <div class="user-rank">
+                            <span class="rank-label">Ваше место в рейтинге</span>
+                            <span class="rank-number" id="userRank">-</span>
+                        </div>
+                        <div class="user-stats">
+                            <div class="user-stat">
+                                <span class="stat-label">Налоги</span>
+                                <span class="stat-value" id="userTaxes">0 USDT</span>
+                            </div>
+                            <div class="user-stat">
+                                <span class="stat-label">Население</span>
+                                <span class="stat-value" id="userPopulation">0</span>
+                            </div>
+                            <div class="user-stat">
+                                <span class="stat-label">Общий доход</span>
+                                <span class="stat-value" id="userTotal">0 USDT</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Модальные окна (остаются без изменений) -->
+    <div class="modal-overlay" id="modalOverlay"></div>
+
+    <div class="modal modal-wallet" id="walletModal">
+        <!-- Содержимое без изменений -->
+    </div>
+
+    <div class="modal modal-invest" id="investModal">
+        <!-- Содержимое без изменений -->
+    </div>
+
+
+    <div class="modal modal-referral" id="referralModal">
+        <!-- Содержимое без изменений -->
+    </div>
+
+    <!-- Уведомления -->
+    <div class="notifications-container" id="notificationsContainer"></div>
+
+    <!-- Скрипты -->
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.7.3/dist/web3.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <script src="scripts/config.js"></script>
+    <script src="scripts/web3.js"></script>
+    <script src="scripts/utils.js"></script>
+    <script src="scripts/app.js"></script>
+</body>
+</html>
