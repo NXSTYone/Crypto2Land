@@ -243,8 +243,8 @@ body::before {
 }
 
 .custom-logo {
-    width: 60px;
-    height: 60px;
+    width: 80px;
+    height: 80px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -264,8 +264,8 @@ body::before {
 }
 
 .logo-fallback {
-    width: 60px;
-    height: 60px;
+    width: 80px;
+    height: 80px;
     background: var(--gradient-gold);
     border-radius: 15px;
     display: flex;
@@ -282,7 +282,7 @@ body::before {
 
 .logo-main-title {
     font-family: 'Orbitron', sans-serif;
-    font-size: 42px;
+    font-size: 48px;
     font-weight: 900;
     color: #fff;
     letter-spacing: 3px;
@@ -3962,5 +3962,6 @@ margin-bottom: 20px;
     margin-left: auto;
     margin-right: auto;
 }
+
 
 
