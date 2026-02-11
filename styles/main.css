@@ -3864,3 +3864,78 @@ margin-bottom: 20px;
         max-height: -webkit-fill-available;
     }
 }
+
+/* ===== СТИЛИЗАЦИЯ КНОПКИ В ПУСТОМ СОСТОЯНИИ ===== */
+.empty-state .primary-btn {
+    background: var(--gradient-gold);
+    color: #000;
+    border: none;
+    padding: 16px 36px;
+    font-size: 18px;
+    font-weight: 700;
+    border-radius: 60px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: var(--transition);
+    box-shadow: 0 8px 20px rgba(255, 215, 0, 0.25);
+    margin-top: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    letter-spacing: 1px;
+}
+
+.empty-state .primary-btn i {
+    font-size: 20px;
+    color: #000;
+    transition: var(--transition);
+}
+
+.empty-state .primary-btn:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--glow-gold);
+    background: linear-gradient(145deg, #FFE55C, #FFC800);
+}
+
+.empty-state .primary-btn:active {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(255, 215, 0, 0.4);
+}
+
+/* Дополнительные стили для пустого состояния */
+.empty-state {
+    text-align: center;
+    padding: 70px 30px;
+    background: var(--card-bg);
+    backdrop-filter: blur(10px);
+    border-radius: 40px;
+    border: 1px solid var(--border-light);
+    margin-top: 20px;
+}
+
+.empty-state .empty-icon {
+    font-size: 80px;
+    color: var(--accent-gold);
+    opacity: 0.6;
+    margin-bottom: 25px;
+    animation: float 6s ease-in-out infinite;
+}
+
+.empty-state h3 {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 15px;
+    background: linear-gradient(145deg, #fff, #ddd);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.empty-state p {
+    color: var(--text-muted);
+    font-size: 18px;
+    margin-bottom: 25px;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
