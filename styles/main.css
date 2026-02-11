@@ -4771,30 +4771,120 @@ margin-bottom: 20px;
 /* ===== МОБИЛЬНАЯ ШАПКА - ОКОНЧАТЕЛЬНАЯ ВЕРСИЯ ===== */
 @media (max-width: 768px) {
     .main-header {
-        display: grid;
-        grid-template-columns: 1fr 2fr 1fr;
-        grid-template-rows: auto auto;
-        padding: 15px;
-        min-height: 160px;
-        align-items: center;
+        display: flex;
+        flex-direction: column;
+        padding: 20px 15px;
+        min-height: 200px;
         position: relative;
     }
     
+    /* Логотип по центру */
     .header-center {
-        grid-column: 1 / 4;
-        grid-row: 1;
+        width: 100%;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        margin-bottom: 15px;
+        margin-bottom: 30px;
+        order: -1;
     }
     
     .logo-container {
         display: flex;
         align-items: center;
+        gap: 12px;
+        margin-top: 10px;
+    }
+    
+    .custom-logo {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .logo-main-title {
+        font-size: 28px;
+    }
+    
+    .logo-description {
+        display: block !important;
+        font-size: 11px;
+        letter-spacing: 4px;
+        color: var(--text-muted);
+        margin-top: 8px;
+    }
+    
+    .crown-logo {
+        font-size: 24px;
+        top: -22px;
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+    
+    /* Аватар слева внизу */
+    .header-left {
+        position: absolute;
+        left: 15px;
+        bottom: 20px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .mayor-avatar-container {
+        width: 60px;
+        height: 60px;
+        margin: 0;
+        position: relative;
+        bottom: 0;
+    }
+    
+    .mayor-avatar {
+        width: 60px;
+        height: 60px;
+        border-width: 3px;
+    }
+    
+    /* Кнопка кошелька справа внизу */
+    .header-right {
+        position: absolute;
+        right: 15px;
+        bottom: 20px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .wallet-header-container {
+        padding: 6px 16px;
         gap: 10px;
-        margin-top: 5px;
+        min-width: 160px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        background: rgba(0,0,0,0.3);
+        border: 1px solid var(--border-gold);
+        border-radius: 40px;
+    }
+    
+    .wallet-mini-balance {
+        font-size: 16px;
+    }
+    
+    .wallet-connect-button {
+        padding: 6px 16px;
+        font-size: 13px;
+        height: 38px;
+    }
+}
+
+/* ===== ДЛЯ МАЛЕНЬКИХ ТЕЛЕФОНОВ ===== */
+@media (max-width: 480px) {
+    .main-header {
+        min-height: 190px;
+        padding: 18px 12px;
+    }
+    
+    .header-center {
+        margin-bottom: 25px;
     }
     
     .custom-logo {
@@ -4809,7 +4899,6 @@ margin-bottom: 20px;
     .logo-description {
         font-size: 10px;
         letter-spacing: 3px;
-        margin-top: 5px;
     }
     
     .crown-logo {
@@ -4818,17 +4907,13 @@ margin-bottom: 20px;
     }
     
     .header-left {
-        grid-column: 1;
-        grid-row: 2;
-        position: static;
-        display: flex;
-        justify-content: flex-start;
+        left: 12px;
+        bottom: 15px;
     }
     
     .mayor-avatar-container {
         width: 55px;
         height: 55px;
-        margin: 0;
     }
     
     .mayor-avatar {
@@ -4837,19 +4922,14 @@ margin-bottom: 20px;
     }
     
     .header-right {
-        grid-column: 3;
-        grid-row: 2;
-        position: static;
-        display: flex;
-        justify-content: flex-end;
+        right: 12px;
+        bottom: 15px;
     }
     
     .wallet-header-container {
-        padding: 5px 12px;
-        gap: 8px;
-        min-width: 140px;
+        padding: 5px 14px;
+        min-width: 150px;
         height: 46px;
-        margin: 0;
     }
     
     .wallet-mini-balance {
@@ -4857,54 +4937,8 @@ margin-bottom: 20px;
     }
     
     .wallet-connect-button {
-        padding: 6px 14px;
+        padding: 5px 14px;
         font-size: 12px;
         height: 36px;
-    }
-}
-
-@media (max-width: 480px) {
-    .main-header {
-        padding: 12px;
-        min-height: 150px;
-    }
-    
-    .custom-logo {
-        width: 40px;
-        height: 40px;
-    }
-    
-    .logo-main-title {
-        font-size: 22px;
-    }
-    
-    .mayor-avatar-container {
-        width: 50px;
-        height: 50px;
-    }
-    
-    .mayor-avatar {
-        width: 50px;
-        height: 50px;
-    }
-    
-    .wallet-header-container {
-        padding: 4px 10px;
-        min-width: 130px;
-        height: 42px;
-    }
-    
-    .wallet-mini-balance {
-        font-size: 14px;
-    }
-    
-    .wallet-connect-button {
-        padding: 5px 12px;
-        font-size: 11px;
-        height: 34px;
-    }
-    
-    .logo-description {
-        display: none;
     }
 }
