@@ -4552,3 +4552,234 @@ margin-bottom: 20px;
     }
 }
 
+/* ===== МОБИЛЬНАЯ ШАПКА - ПОЛНОСТЬЮ ИСПРАВЛЕННАЯ ===== */
+@media (max-width: 768px) {
+    .main-header {
+        flex-direction: column;
+        padding: 30px 20px;
+        position: relative;
+        min-height: 200px;
+        margin-bottom: 25px;
+        display: flex;
+        justify-content: space-between;
+    }
+    
+    .header-center {
+        order: -1;
+        width: 100%;
+        margin-bottom: 30px;
+        position: relative;
+    }
+    
+    .logo-container {
+        gap: 15px;
+        margin-top: 15px;
+    }
+    
+    .custom-logo {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .logo-main-title {
+        font-size: 32px;
+    }
+    
+    .logo-description {
+        display: block;
+        font-size: 12px;
+        letter-spacing: 5px;
+        margin-top: 8px;
+    }
+    
+    .crown-logo {
+        font-size: 28px;
+        top: -25px;
+    }
+    
+    .header-left, 
+    .header-right {
+        position: absolute;
+        bottom: 25px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .header-left {
+        left: 20px;
+        top: auto;
+        bottom: 25px;
+        width: auto;
+    }
+    
+    .header-right {
+        right: 20px;
+        bottom: 25px;
+        width: auto;
+    }
+    
+    .mayor-avatar-container {
+        width: 65px;
+        height: 65px;
+        margin: 0;
+    }
+    
+    .mayor-avatar {
+        width: 65px;
+        height: 65px;
+        border-width: 3px;
+    }
+    
+    .avatar-fallback {
+        font-size: 32px;
+    }
+    
+    .avatar-status {
+        width: 14px;
+        height: 14px;
+        bottom: 5px;
+        right: 5px;
+    }
+    
+    .wallet-header-container {
+        padding: 10px 20px;
+        gap: 12px;
+        width: auto;
+        min-width: 180px;
+        height: 58px;
+        display: flex;
+        align-items: center;
+        border-radius: 40px;
+        background: rgba(0,0,0,0.4);
+    }
+    
+    .wallet-mini-info {
+        display: flex;
+    }
+    
+    .wallet-mini-label {
+        font-size: 12px;
+    }
+    
+    .wallet-mini-balance {
+        font-size: 18px;
+    }
+    
+    .wallet-connect-button {
+        padding: 8px 18px;
+        font-size: 14px;
+        gap: 8px;
+        white-space: nowrap;
+        height: 42px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .wallet-connect-button i {
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .main-header {
+        min-height: 190px;
+        padding: 25px 15px;
+    }
+    
+    .header-left,
+    .header-right {
+        bottom: 20px;
+    }
+    
+    .header-left {
+        left: 15px;
+    }
+    
+    .header-right {
+        right: 15px;
+    }
+    
+    .mayor-avatar-container {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .mayor-avatar {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .wallet-header-container {
+        padding: 8px 16px;
+        min-width: 170px;
+        height: 54px;
+    }
+    
+    .wallet-mini-balance {
+        font-size: 17px;
+    }
+    
+    .wallet-connect-button {
+        padding: 7px 16px;
+        font-size: 13px;
+        height: 40px;
+    }
+    
+    .logo-main-title {
+        font-size: 28px;
+    }
+    
+    .custom-logo {
+        width: 55px;
+        height: 55px;
+    }
+    
+    .logo-description {
+        font-size: 11px;
+        letter-spacing: 4px;
+    }
+}
+
+@media (max-width: 360px) {
+    .main-header {
+        min-height: 180px;
+        padding: 20px 12px;
+    }
+    
+    .mayor-avatar-container {
+        width: 55px;
+        height: 55px;
+    }
+    
+    .wallet-header-container {
+        padding: 6px 14px;
+        min-width: 160px;
+        height: 50px;
+    }
+    
+    .wallet-mini-balance {
+        font-size: 16px;
+    }
+    
+    .wallet-connect-button {
+        padding: 6px 14px;
+        font-size: 12px;
+        height: 38px;
+    }
+    
+    .logo-main-title {
+        font-size: 24px;
+    }
+    
+    .custom-logo {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .
+logo-description {
+        font-size: 10px;
+        letter-spacing: 3px;
+    }
+}
+
