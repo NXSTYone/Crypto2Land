@@ -126,8 +126,8 @@ body::before {
 }
 
 .preloader-logo-container {
-    width: 160px;
-    height: 160px;
+    width: 200px;
+    height: 200px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -145,14 +145,14 @@ body::before {
 }
 
 .preloader-logo-fallback {
-    width: 160px;
-    height: 160px;
+    width: 200px;
+    height: 200px;
     background: var(--gradient-gold);
     border-radius: 30px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 80px;
+    font-size: 100px;
     color: #000;
     box-shadow: var(--glow-gold);
 }
@@ -4716,5 +4716,6 @@ margin-bottom: 20px;
         top: -20px;
     }
 }
+
 
 
