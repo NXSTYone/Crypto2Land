@@ -4525,4 +4525,31 @@ margin-bottom: 20px;
     }
 }
 
+/* ===== ИСПРАВЛЕНИЕ БЕЙДЖА В НАВИГАЦИИ ===== */
+.nav-menu-item .nav-badge {
+    background: var(--gradient-gold);
+    color: #000;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 2px 8px;        /* было 4px 10px - уменьшил */
+    border-radius: 20px;
+    margin-left: 8px;
+    min-width: 24px;         /* добавил минимальную ширину */
+    height: 22px;           /* добавил фиксированную высоту */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+/* ДЛЯ МОБИЛЬНЫХ */
+@media (max-width: 768px) {
+    .nav-menu-item .nav-badge {
+        padding: 1px 6px;
+        min-width: 20px;
+        height: 20px;
+        font-size: 11px;
+    }
+}
+
 
