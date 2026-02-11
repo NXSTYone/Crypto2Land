@@ -117,8 +117,8 @@ body::before {
 }
 
 .logo-glow {
-    width: 150px;
-    height: 150px;
+    width: 2000px;
+    height: 2000px;
     background: radial-gradient(circle, rgba(255,215,0,0.2) 0%, transparent 70%);
     border-radius: 50%;
     position: absolute;
@@ -126,14 +126,14 @@ body::before {
 }
 
 .preloader-logo-container {
-    width: 120px;
-    height: 120px;
+    width: 160px;
+    height: 160px;
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
     z-index: 2;
-    margin-bottom: 20px;
+    margin-bottom: 25px;
 }
 
 .preloader-logo-image {
@@ -145,14 +145,14 @@ body::before {
 }
 
 .preloader-logo-fallback {
-    width: 120px;
-    height: 120px;
+    width: 160px;
+    height: 160px;
     background: var(--gradient-gold);
     border-radius: 30px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 60px;
+    font-size: 80px;
     color: #000;
     box-shadow: var(--glow-gold);
 }
@@ -3962,4 +3962,5 @@ margin-bottom: 20px;
     margin-left: auto;
     margin-right: auto;
 }
+
 
