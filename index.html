@@ -11,24 +11,29 @@
 </head>
 <body>
     <!-- ПРЕЛОАДЕР -->
-    <div class="preloader" id="preloader">
-        <div class="preloader-content">
-            <div class="preloader-logo">
-                <div class="logo-glow"></div>
-                <div class="logo-icon">
+<div class="preloader" id="preloader">
+    <div class="preloader-content">
+        <div class="preloader-logo">
+            <div class="logo-glow"></div>
+            <!-- ВАШ ЛОГОТИП -->
+            <div class="preloader-logo-container">
+                <img src="assets/logo.png" alt="CryptoLand" class="preloader-logo-image" id="preloaderLogo">
+                <div class="preloader-logo-fallback" id="preloaderLogoFallback" style="display: none;">
                     <i class="fas fa-city"></i>
                 </div>
-                <div class="logo-text-wrapper">
-                    <div class="logo-main">CRYPTOLAND</div>
-                    <div class="logo-sub">КРИПТО-МЕГАПОЛИС</div>
-                </div>
             </div>
-            <div class="preloader-progress">
-                <div class="progress-bar"></div>
+            <div class="logo-text-wrapper">
+                <div class="logo-main">CRYPTOLAND</div>
+                <div class="logo-sub">КРИПТО-МЕГАПОЛИС</div>
             </div>
-            <p class="preloader-subtitle">Инициализация виртуального пространства...</p>
         </div>
+        <div class="preloader-progress">
+            <div class="progress-bar"></div>
+        </div>
+        <p class="preloader-subtitle">Инициализация виртуального пространства...</p>
     </div>
+</div>
+
 
     <div class="app-container">
         <main class="main-content full-width">
@@ -887,3 +892,4 @@
     <script src="scripts/app.js"></script>
 </body>
 </html>
+
