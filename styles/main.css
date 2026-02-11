@@ -4767,3 +4767,144 @@ margin-bottom: 20px;
         height: 45px;
     }
 }
+
+/* ===== МОБИЛЬНАЯ ШАПКА - ОКОНЧАТЕЛЬНАЯ ВЕРСИЯ ===== */
+@media (max-width: 768px) {
+    .main-header {
+        display: grid;
+        grid-template-columns: 1fr 2fr 1fr;
+        grid-template-rows: auto auto;
+        padding: 15px;
+        min-height: 160px;
+        align-items: center;
+        position: relative;
+    }
+    
+    .header-center {
+        grid-column: 1 / 4;
+        grid-row: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 15px;
+    }
+    
+    .logo-container {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 5px;
+    }
+    
+    .custom-logo {
+        width: 45px;
+        height: 45px;
+    }
+    
+    .logo-main-title {
+        font-size: 24px;
+    }
+    
+    .logo-description {
+        font-size: 10px;
+        letter-spacing: 3px;
+        margin-top: 5px;
+    }
+    
+    .crown-logo {
+        font-size: 22px;
+        top: -20px;
+    }
+    
+    .header-left {
+        grid-column: 1;
+        grid-row: 2;
+        position: static;
+        display: flex;
+        justify-content: flex-start;
+    }
+    
+    .mayor-avatar-container {
+        width: 55px;
+        height: 55px;
+        margin: 0;
+    }
+    
+    .mayor-avatar {
+        width: 55px;
+        height: 55px;
+    }
+    
+    .header-right {
+        grid-column: 3;
+        grid-row: 2;
+        position: static;
+        display: flex;
+        justify-content: flex-end;
+    }
+    
+    .wallet-header-container {
+        padding: 5px 12px;
+        gap: 8px;
+        min-width: 140px;
+        height: 46px;
+        margin: 0;
+    }
+    
+    .wallet-mini-balance {
+        font-size: 15px;
+    }
+    
+    .wallet-connect-button {
+        padding: 6px 14px;
+        font-size: 12px;
+        height: 36px;
+    }
+}
+
+@media (max-width: 480px) {
+    .main-header {
+        padding: 12px;
+        min-height: 150px;
+    }
+    
+    .custom-logo {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .logo-main-title {
+        font-size: 22px;
+    }
+    
+    .mayor-avatar-container {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .mayor-avatar {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .wallet-header-container {
+        padding: 4px 10px;
+        min-width: 130px;
+        height: 42px;
+    }
+    
+    .wallet-mini-balance {
+        font-size: 14px;
+    }
+    
+    .wallet-connect-button {
+        padding: 5px 12px;
+        font-size: 11px;
+        height: 34px;
+    }
+    
+    .logo-description {
+        display: none;
+    }
+}
