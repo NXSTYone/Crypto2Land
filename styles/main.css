@@ -4546,11 +4546,12 @@ margin-bottom: 20px;
 @media (max-width: 768px) {
     .nav-menu-item .nav-badge {
         padding: 1px 6px;
-        min-width: 10px;
+        min-width: 20px;
         height: 20px;
         font-size: 11px;
     }
 }
+
 
 
 
