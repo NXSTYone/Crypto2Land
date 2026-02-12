@@ -4842,4 +4842,70 @@ margin-bottom: 20px;
     }
 }
 
+/* ===== СТИЛИЗАЦИЯ ПОЛЯ РЕФЕРЕР ===== */
+#referrerAddress {
+    width: 100%;
+    padding: 14px 20px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 2px solid var(--border-light);
+    border-radius: 50px;
+    color: #fff;
+    font-size: 15px;
+    font-family: 'Rajdhani', 'Inter', sans-serif;
+    transition: var(--transition);
+    outline: none;
+}
+
+#referrerAddress:hover {
+    border-color: var(--accent-gold);
+    background: rgba(255, 215, 0, 0.05);
+}
+
+#referrerAddress:focus {
+    border-color: var(--accent-gold);
+    box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.1);
+    background: rgba(0, 0, 0, 0.5);
+}
+
+#referrerAddress::placeholder {
+    color: var(--text-muted);
+    font-size: 14px;
+    opacity: 0.7;
+}
+
+/* Стили для лейбла поля реферер */
+.form-group label[for="referrerAddress"] {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 15px;
+    margin-bottom: 5px;
+}
+
+.form-group label[for="referrerAddress"] i {
+    color: var(--accent-gold);
+    font-size: 16px;
+}
+
+/* Мобильная адаптация */
+@media (max-width: 768px) {
+    #referrerAddress {
+        padding: 12px 18px;
+        font-size: 14px;
+    }
+    
+    .form-group label[for="referrerAddress"] {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    #referrerAddress {
+        padding: 10px 16px;
+        font-size: 13px;
+    }
+}
+
 
