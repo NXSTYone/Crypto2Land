@@ -247,8 +247,8 @@ const CONFIG = {
             walletconnect_desc: "Подключение по QR-коду",
             
             // Фразы мэра
-            mayor_title: "Мэр CryptoLand",
-            mayor_subtitle: "Глава виртуального города",
+            mayor_title: "Устав CryptoLand",
+            mayor_subtitle: "Правила виртуального города",
             new_phrase: "Следующий устав"
         },
         
@@ -431,8 +431,8 @@ const CONFIG = {
             walletconnect_desc: "QR code connection",
             
             // Mayor phrases
-            mayor_title: "Mayor of CryptoLand",
-            mayor_subtitle: "Head of the virtual city",
+            mayor_title: "Charter of CryptoLand",
+            mayor_subtitle: "Rules of the virtual city",
             new_phrase: "Next charter"
         }
     },
@@ -475,3 +475,4 @@ CONFIG.getContractABI = async function() {
 };
 
 window.CONFIG = CONFIG;
+
