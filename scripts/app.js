@@ -462,41 +462,41 @@ class CryptoLandApp {
 
 
     renderTariffs() {
-        const container = document.getElementById('tariffsGrid');
-        if (!container) return;
-        
-        container.innerHTML = this.tariffs.map(tariff => `
-            <div class="tariff-card ${tariff.premium ? 'premium' : ''}" data-tariff="${tariff.id}">
-                <div class="tariff-icon">${tariff.icon}</div>
-                <div class="tariff-header">
-                    <div class="tariff-name">${tariff.name}</div>
-                    ${tariff.premium ? '<div class="tariff-badge">VIP</div>' : ''}
-                </div>
-                <div class="tariff-body">
-                    <div class="tariff-percent">${tariff.dailyPercent}%</div>
-                    <div class="tariff-period">ежедневно • ${tariff.duration} дней</div>
-                    <ul class="tariff-features">
-                        <li><i class="fas fa-check-circle"></i> Мин. сумма: 10 USDT</li>
-                        <li><i class="fas fa-check-circle"></i> Вывод процентов ежедневно</li>
-                        <li><i class="fas fa-check-circle"></i> Комиссия 15% на вывод</li>
-                    </ul>
-                    <div class="tariff-actions">
-                        <button class="tariff-btn primary-btn" data-tariff-id="${tariff.id}">
-                            <i class="fas fa-coins"></i>
-                            Инвестировать
-                        </button>
-                    </div>
+    const container = document.getElementById('tariffsGrid');
+    if (!container) return;
+    
+    container.innerHTML = this.tariffs.map(tariff => `
+        <div class="tariff-card ${tariff.premium ? 'premium' : ''}" data-tariff="${tariff.id}">
+            <div class="tariff-header">
+                <div class="tariff-name">${tariff.name}</div>
+                ${tariff.premium ? '<div class="tariff-badge">VIP</div>' : ''}
+            </div>
+            <div class="tariff-body">
+                <div class="tariff-percent">${tariff.dailyPercent}%</div>
+                <div class="tariff-period">ежедневно • ${tariff.duration} дней</div>
+                <ul class="tariff-features">
+                    <li><i class="fas fa-check-circle"></i> Мин. сумма: 10 USDT</li>
+                    <li><i class="fas fa-check-circle"></i> Вывод процентов ежедневно</li>
+                    <li><i class="fas fa-check-circle"></i> Комиссия 15% на вывод</li>
+                </ul>
+                <div class="tariff-actions">
+                    <button class="tariff-btn primary-btn" data-tariff-id="${tariff.id}">
+                        <i class="fas fa-coins"></i>
+                        Инвестировать
+                    </button>
                 </div>
             </div>
-        `).join('');
-        
-        document.querySelectorAll('.primary-btn[data-tariff-id]').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const tariffId = e.currentTarget.dataset.tariffId;
-                this.showInvestModal(parseInt(tariffId));
-            });
+        </div>
+    `).join('');
+    
+    document.querySelectorAll('.primary-btn[data-tariff-id]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const tariffId = e.currentTarget.dataset.tariffId;
+            this.showInvestModal(parseInt(tariffId));
         });
-    }
+    });
+}
+
 
     renderLevels() {
         const container = document.getElementById('levelsBody');
@@ -752,3 +752,4 @@ class CryptoLandApp {
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new CryptoLandApp();
 });
+
