@@ -4552,177 +4552,154 @@ margin-bottom: 20px;
     }
 }
 
-/* ===== МОБИЛЬНАЯ ШАПКА - ОКОНЧАТЕЛЬНАЯ ВЕРСИЯ ===== */
+/* ===== МОБИЛЬНАЯ ШАПКА - ТОЧНОЕ ПОЗИЦИОНИРОВАНИЕ ===== */
 @media (max-width: 768px) {
     .main-header {
-        display: flex;
-        flex-direction: column;
-        padding: 20px 15px;
-        min-height: 200px;
-        position: relative;
+        position: relative !important;
+        min-height: 180px !important;
+        padding: 20px 15px !important;
+        display: flex !important;
+        flex-direction: column !important;
     }
     
-    /* Логотип по центру */
+    /* Логотип и название по центру */
     .header-center {
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 30px;
-        order: -1;
+        position: static !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 100% !important;
+        margin: 0 auto !important;
+        padding-top: 10px !important;
     }
     
     .logo-container {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin-top: 10px;
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px !important;
     }
     
     .custom-logo {
-        width: 50px;
-        height: 50px;
+        width: 55px !important;
+        height: 55px !important;
     }
     
     .logo-main-title {
-        font-size: 28px;
+        font-size: 28px !important;
     }
     
     .logo-description {
         display: block !important;
-        font-size: 11px;
-        letter-spacing: 4px;
-        color: var(--text-muted);
-        margin-top: 8px;
+        font-size: 11px !important;
+        letter-spacing: 4px !important;
+        margin-top: 8px !important;
     }
     
     .crown-logo {
-        font-size: 24px;
-        top: -22px;
-        position: absolute;
-        left: 50%;
-        transform: translateX(-50%);
+        position: absolute !important;
+        top: 15px !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        font-size: 24px !important;
     }
     
-    /* Аватар слева внизу */
+    /* Аватар слева снизу */
     .header-left {
-        position: absolute;
-        left: 15px;
-        bottom: 20px;
-        display: flex;
-        align-items: center;
+        position: absolute !important;
+        left: 15px !important;
+        bottom: 15px !important;
+        display: flex !important;
+        align-items: center !important;
     }
     
     .mayor-avatar-container {
-        width: 60px;
-        height: 60px;
-        margin: 0;
-        position: relative;
-        bottom: 0;
+        width: 60px !important;
+        height: 60px !important;
+        margin: 0 !important;
     }
     
     .mayor-avatar {
-        width: 60px;
-        height: 60px;
-        border-width: 3px;
+        width: 60px !important;
+        height: 60px !important;
     }
     
-    /* Кнопка кошелька справа внизу */
+    /* Кнопка кошелька справа снизу */
     .header-right {
-        position: absolute;
-        right: 15px;
-        bottom: 20px;
-        display: flex;
-        align-items: center;
+        position: absolute !important;
+        right: 15px !important;
+        bottom: 15px !important;
+        display: flex !important;
+        align-items: center !important;
     }
     
     .wallet-header-container {
-        padding: 6px 16px;
-        gap: 10px;
-        min-width: 160px;
-        height: 50px;
-        display: flex;
-        align-items: center;
-        background: rgba(0,0,0,0.3);
-        border: 1px solid var(--border-gold);
-        border-radius: 40px;
+        padding: 6px 16px !important;
+        gap: 10px !important;
+        min-width: 160px !important;
+        height: 50px !important;
+        display: flex !important;
+        align-items: center !important;
+        margin: 0 !important;
     }
     
     .wallet-mini-balance {
-        font-size: 16px;
+        font-size: 16px !important;
     }
     
     .wallet-connect-button {
-        padding: 6px 16px;
-        font-size: 13px;
-        height: 38px;
+        padding: 6px 16px !important;
+        font-size: 13px !important;
+        height: 38px !important;
+        white-space: nowrap !important;
     }
 }
 
-/* ===== ДЛЯ МАЛЕНЬКИХ ТЕЛЕФОНОВ ===== */
 @media (max-width: 480px) {
     .main-header {
-        min-height: 190px;
-        padding: 18px 12px;
-    }
-    
-    .header-center {
-        margin-bottom: 25px;
+        min-height: 170px !important;
+        padding: 15px 12px !important;
     }
     
     .custom-logo {
-        width: 45px;
-        height: 45px;
+        width: 50px !important;
+        height: 50px !important;
     }
     
     .logo-main-title {
-        font-size: 24px;
+        font-size: 24px !important;
     }
     
     .logo-description {
-        font-size: 10px;
-        letter-spacing: 3px;
-    }
-    
-    .crown-logo {
-        font-size: 22px;
-        top: -20px;
-    }
-    
-    .header-left {
-        left: 12px;
-        bottom: 15px;
+        font-size: 10px !important;
+        letter-spacing: 3px !important;
     }
     
     .mayor-avatar-container {
-        width: 55px;
-        height: 55px;
+        width: 55px !important;
+        height: 55px !important;
     }
     
     .mayor-avatar {
-        width: 55px;
-        height: 55px;
-    }
-    
-    .header-right {
-        right: 12px;
-        bottom: 15px;
+        width: 55px !important;
+        height: 55px !important;
     }
     
     .wallet-header-container {
-        padding: 5px 14px;
-        min-width: 150px;
-        height: 46px;
+        padding: 5px 14px !important;
+        min-width: 150px !important;
+        height: 46px !important;
     }
     
     .wallet-mini-balance {
-        font-size: 15px;
+        font-size: 15px !important;
     }
     
     .wallet-connect-button {
-        padding: 5px 14px;
-        font-size: 12px;
-        height: 36px;
+        padding: 5px 14px !important;
+        font-size: 12px !important;
+        height: 36px !important;
     }
 }
+
+
