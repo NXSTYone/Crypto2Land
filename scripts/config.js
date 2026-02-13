@@ -245,7 +245,7 @@ const CONFIG = {
             metamask_desc: "Наиболее популярный крипто-кошелек",
             trust_desc: "Официальный кошелек Binance",
             walletconnect_desc: "Подключение по QR-коду",
-            "telegram_note": "Если вы в Telegram MiniApp: используйте WalletConnect или откройте приложение в браузере",
+            telegram_note: "Если вы в Telegram MiniApp: используйте WalletConnect или откройте приложение в браузере",
             
             // Фразы мэра
             mayor_title: "Мэр CryptoLand",
@@ -430,7 +430,7 @@ const CONFIG = {
             metamask_desc: "Most popular crypto wallet",
             trust_desc: "Official Binance wallet",
             walletconnect_desc: "QR code connection",
-            "telegram_note": "If you are in Telegram MiniApp: use WalletConnect or open the app in browser",
+            telegram_note: "If you are in Telegram MiniApp: use WalletConnect or open the app in browser",
             
             // Mayor phrases
             mayor_title: "Mayor of CryptoLand",
@@ -477,6 +477,7 @@ CONFIG.getContractABI = async function() {
 };
 
 window.CONFIG = CONFIG;
+
 
 
 
