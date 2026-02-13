@@ -525,7 +525,7 @@ class CryptoLandApp {
                 'info'
             );
             
-            await this.web3.init();
+            await this.web3.init(this.selectedWallet);
             await this.updateUserInfo();
             await this.loadDeposits();
             
@@ -1162,3 +1162,4 @@ class CryptoLandApp {
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new CryptoLandApp();
 });
+
