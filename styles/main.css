@@ -4925,5 +4925,36 @@ margin-bottom: 20px;
     }
 }
 
+/* ===== СТИЛИ ДЛЯ КНОПКИ ПОДКЛЮЧЕНИЯ (ДОБАВЬТЕ В КОНЕЦ ФАЙЛА) ===== */
 
+/* Стиль для подключенной кнопки */
+.wallet-connect-button.connected {
+    background: linear-gradient(145deg, #27AE60, #1E8449);
+    color: white;
+    box-shadow: 0 0 20px rgba(39, 174, 96, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
 
+.wallet-connect-button.connected i {
+    color: white;
+}
+
+.wallet-connect-button.connected:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 25px rgba(39, 174, 96, 0.5);
+    background: linear-gradient(145deg, #2ecc71, #27ae60);
+}
+
+/* Анимация для иконки при подключении */
+.wallet-connect-button.connected i {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
