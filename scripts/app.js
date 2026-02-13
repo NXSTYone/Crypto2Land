@@ -64,22 +64,43 @@ class CryptoLandApp {
 
     async loadTariffsFromContract() {
         try {
-            this.tariffs = await this.web3.getTariffs();
-            this.renderTariffs();
+            // Пробуем загрузить тарифы из контракта
+            if (this.web3 && this.web3.isConnected) {
+                const contractTariffs = await this.web3.getTariffs();
+                if (contractTariffs && contractTariffs.length > 0) {
+                    this.tariffs = contractTariffs;
+                    console.log("✅ Тарифы загружены из контракта:", this.tariffs);
+                    this.renderTariffs();
+                    return;
+                }
+            }
+            
+            // Если не удалось загрузить из контракта, используем локальные
+            console.log("⚠️ Используем локальные тарифы");
+            this.useLocalTariffs();
+            
         } catch (error) {
-            console.error('Error loading tariffs:', error);
-            // Используем тарифы из конфига как запасной вариант
-            this.tariffs = [
-                { id: 0, name: "Спальный район", name_en: "Residential District", dailyPercent: 0.5, duration: 3 },
-                { id: 1, name: "Жилой квартал", name_en: "Housing Complex", dailyPercent: 0.6, duration: 5 },
-                { id: 2, name: "Новый микрорайон", name_en: "New Neighborhood", dailyPercent: 0.7, duration: 7 },
-                { id: 3, name: "Деловой центр", name_en: "Business Center", dailyPercent: 0.85, duration: 10 },
-                { id: 4, name: "Бизнес-кластер", name_en: "Business Cluster", dailyPercent: 1.0, duration: 15 },
-                { id: 5, name: "Элитный квартал", name_en: "Elite Quarter", dailyPercent: 1.2, duration: 20 },
-                { id: 6, name: "Мегаполис", name_en: "Megapolis", dailyPercent: 1.5, duration: 30 }
-            ];
-            this.renderTariffs();
+            console.error('❌ Ошибка загрузки тарифов из контракта:', error);
+            // В случае ошибки используем локальные тарифы
+            this.useLocalTariffs();
         }
+    }
+
+    /**
+     * Использование локальных тарифов (запасной вариант)
+     */
+    useLocalTariffs() {
+        this.tariffs = [
+            { id: 0, name: "Спальный район", name_en: "Residential District", dailyPercent: 0.5, duration: 3 },
+            { id: 1, name: "Жилой квартал", name_en: "Housing Complex", dailyPercent: 0.6, duration: 5 },
+            { id: 2, name: "Новый микрорайон", name_en: "New Neighborhood", dailyPercent: 0.7, duration: 7 },
+            { id: 3, name: "Деловой центр", name_en: "Business Center", dailyPercent: 0.85, duration: 10 },
+            { id: 4, name: "Бизнес-кластер", name_en: "Business Cluster", dailyPercent: 1.0, duration: 15 },
+            { id: 5, name: "Элитный квартал", name_en: "Elite Quarter", dailyPercent: 1.2, duration: 20 },
+            { id: 6, name: "Мегаполис", name_en: "Megapolis", dailyPercent: 1.5, duration: 30 }
+        ];
+        this.renderTariffs();
+        console.log("📋 Локальные тарифы загружены");
     }
 
     // ===== ЯЗЫК =====
@@ -517,6 +538,7 @@ class CryptoLandApp {
 
     // Функция checkConnection() ПОЛНОСТЬЮ УДАЛЕНА
 
+    // ============ ИСПРАВЛЕННАЯ ФУНКЦИЯ CONNECTWALLET ============
     async connectWallet() {
         try {
             this.hideModal('walletModal');
@@ -525,7 +547,9 @@ class CryptoLandApp {
                 'info'
             );
             
+            // ✅ ПЕРЕДАЕМ ВЫБРАННЫЙ ТИП КОШЕЛЬКА В web3.init()
             await this.web3.init(this.selectedWallet);
+            
             await this.updateUserInfo();
             await this.loadDeposits();
             
@@ -541,7 +565,7 @@ class CryptoLandApp {
         } catch (error) {
             console.error('Connection error:', error);
             this.utils.showNotification(
-                this.currentLanguage === 'ru' ? 'Ошибка подключения' : 'Connection error', 
+                this.currentLanguage === 'ru' ? 'Ошибка подключения: ' + error.message : 'Connection error: ' + error.message, 
                 'error'
             );
             // При ошибке кнопка должна быть "ПОДКЛЮЧИТЬ"
@@ -595,7 +619,18 @@ class CryptoLandApp {
 
     renderTariffs() {
         const container = document.getElementById('tariffsGrid');
-        if (!container) return;
+        if (!container) {
+            console.error("❌ Контейнер tariffsGrid не найден");
+            return;
+        }
+        
+        if (!this.tariffs || this.tariffs.length === 0) {
+            console.warn("⚠️ Нет тарифов для отображения");
+            container.innerHTML = '<div class="no-tariffs" style="text-align: center; padding: 40px; color: var(--text-muted);">Тарифы временно недоступны</div>';
+            return;
+        }
+        
+        console.log("📊 Рендерим тарифы:", this.tariffs);
         
         container.innerHTML = this.tariffs.map(tariff => {
             const name = this.currentLanguage === 'ru' ? tariff.name : tariff.name_en;
@@ -1162,4 +1197,3 @@ class CryptoLandApp {
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new CryptoLandApp();
 });
-
