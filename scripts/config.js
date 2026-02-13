@@ -228,7 +228,7 @@ const CONFIG = {
             connect: "Подключить",
             invest_title: "Инвестиция в",
             invest_amount: "Сумма инвестиции (USDT)",
-            referrer: "Реферер (необязательно)",
+            referrer: "Аплайнер (необязательно)",
             minimum: "Минимум",
             available_balance: "Доступно",
             investment_summary: "Сводка по инвестиции",
@@ -248,8 +248,8 @@ const CONFIG = {
             telegram_note: "Если вы в Telegram MiniApp: используйте WalletConnect или откройте приложение в браузере",
             
             // Фразы мэра
-            mayor_title: "Мэр CryptoLand",
-            mayor_subtitle: "Глава виртуального города",
+            mayor_title: "Устав CryptoLand",
+            mayor_subtitle: "Правила виртуального города",
             new_phrase: "Следующий устав"
         },
         
@@ -433,8 +433,8 @@ const CONFIG = {
             telegram_note: "If you are in Telegram MiniApp: use WalletConnect or open the app in browser",
             
             // Mayor phrases
-            mayor_title: "Mayor of CryptoLand",
-            mayor_subtitle: "Head of the virtual city",
+            mayor_title: "Charter of CryptoLand",
+            mayor_subtitle: "Rules of the virtual city",
             new_phrase: "Next charter"
         }
     },
@@ -477,6 +477,7 @@ CONFIG.getContractABI = async function() {
 };
 
 window.CONFIG = CONFIG;
+
 
 
 
