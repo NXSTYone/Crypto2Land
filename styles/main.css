@@ -348,6 +348,22 @@ body::before {
     box-shadow: var(--glow-gold);
 }
 
+/* Стиль для подключенной кнопки */
+.wallet-connect-button.connected {
+    background: linear-gradient(145deg, #27AE60, #1E8449);
+    color: white;
+    box-shadow: 0 0 20px rgba(39, 174, 96, 0.3);
+}
+
+.wallet-connect-button.connected i {
+    color: white;
+}
+
+.wallet-connect-button.connected:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 25px rgba(39, 174, 96, 0.5);
+}
+
 /* ===== НАВИГАЦИЯ ===== */
 .navigation-panel {
     display: flex;
@@ -4924,4 +4940,5 @@ margin-bottom: 20px;
         font-size: 13px;
     }
 }
+
 
