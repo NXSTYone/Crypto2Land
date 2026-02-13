@@ -474,6 +474,8 @@ CONFIG.getContractABI = async function() {
     return [
     {
       "inputs": [
+    {
+      "inputs": [
         {
           "internalType": "address",
           "name": "_usdt",
@@ -667,7 +669,7 @@ CONFIG.getContractABI = async function() {
         }
       ],
       "name": "referralEarnings",
-"outputs": [
+      "outputs": [
         {
           "internalType": "uint256",
           "name": "",
@@ -858,6 +860,7 @@ CONFIG.getContractABI = async function() {
 };
 
 window.CONFIG = CONFIG;
+
 
 
 
