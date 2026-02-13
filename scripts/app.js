@@ -467,44 +467,44 @@ class CryptoLandApp {
     }
 
     async checkConnection() {
-    if (!window.ethereum) {
-        this.utils.showNotification('Установите MetaMask!', 'error');
+        if (window.ethereum && window.ethereum.selectedAddress) {
+            try {
+                await this.web3.init();
+                await this.updateUserInfo();
+                this.utils.showNotification(
+                    this.currentLanguage === 'ru' ? 'Кошелек подключен' : 'Wallet connected', 
+                    'success'
+                );
+                return true;
+            } catch (error) {
+                return false;
+            }
+        }
         return false;
     }
-    
-    try {
-        // ПРОВЕРЯЕМ СЕТЬ
-        const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-        const requiredChainId = CONFIG.CURRENT_NETWORK === 97 ? '0x61' : '0x38';
-        
-        if (chainId !== requiredChainId) {
+
+
+    async connectWallet() {
+        try {
+            this.hideModal('walletModal');
             this.utils.showNotification(
-                this.currentLanguage === 'ru' 
-                    ? 'Пожалуйста, переключитесь на BSC Testnet в MetaMask!' 
-                    : 'Please switch to BSC Testnet in MetaMask!', 
+                this.currentLanguage === 'ru' ? 'Подключение кошелька...' : 'Connecting wallet...', 
+                'info'
+            );
+            await this.web3.init();
+            await this.updateUserInfo();
+            this.utils.showNotification(
+                this.currentLanguage === 'ru' ? 'Кошелек успешно подключен!' : 'Wallet connected successfully!', 
+                'success'
+            );
+            this.updateReferralLink();
+        } catch (error) {
+            this.utils.showNotification(
+                this.currentLanguage === 'ru' ? 'Ошибка подключения' : 'Connection error', 
                 'error'
             );
-            return false;
         }
-        
-        // ПОДКЛЮЧАЕМСЯ
-        await this.web3.init();
-        await this.updateUserInfo();
-        this.utils.showNotification(
-            this.currentLanguage === 'ru' ? 'Кошелек подключен!' : 'Wallet connected!', 
-            'success'
-        );
-        return true;
-        
-    } catch (error) {
-        console.error('Connection error:', error);
-        this.utils.showNotification(
-            this.currentLanguage === 'ru' ? 'Ошибка подключения. Проверьте сеть BSC Testnet!' : 'Connection error. Check BSC Testnet!', 
-            'error'
-        );
-        return false;
     }
-}
 
     async updateUserInfo() {
         if (!this.web3 || !this.web3.isConnected) return;
@@ -873,4 +873,5 @@ class CryptoLandApp {
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new CryptoLandApp();
 });
+
 
