@@ -6,23 +6,139 @@ class CryptoLandWeb3 {
         this.networkId = null;
         this.isConnected = false;
         this.usdtContract = null;
+        this.provider = null;
+        this.walletType = null; // 'metamask' или 'walletconnect'
     }
 
-    async init() {
-        if (window.ethereum) {
-            this.web3 = new Web3(window.ethereum);
-            await this.connect();
-            return true;
-        } else if (window.web3) {
-            this.web3 = new Web3(window.web3.currentProvider);
-            await this.connect();
-            return true;
+    async init(walletType = 'metamask') {
+        this.walletType = walletType;
+        
+        if (walletType === 'metamask') {
+            return this.initMetaMask();
+        } else if (walletType === 'walletconnect' || walletType === 'trustwallet') {
+            return this.initWalletConnect();
         } else {
-            throw new Error("Установите MetaMask или Trust Wallet для использования приложения");
+            throw new Error("Unsupported wallet type");
         }
     }
 
-    async connect() {
+    async initMetaMask() {
+        if (window.ethereum) {
+            this.web3 = new Web3(window.ethereum);
+            await this.connectMetaMask();
+            return true;
+        } else if (window.web3) {
+            this.web3 = new Web3(window.web3.currentProvider);
+            await this.connectMetaMask();
+            return true;
+        } else {
+            throw new Error("Установите MetaMask для использования приложения");
+        }
+    }
+
+    async initWalletConnect() {
+        try {
+            // Проверяем, загружена ли библиотека WalletConnect
+            if (typeof window.WalletConnectProvider === 'undefined') {
+                throw new Error("Библиотека WalletConnect не загружена");
+            }
+            
+            const WalletConnectProvider = window.WalletConnectProvider.default;
+            const provider = new WalletConnectProvider({
+                rpc: {
+                    97: "https://data-seed-prebsc-1-s1.binance.org:8545/", // BSC Testnet
+                    56: "https://bsc-dataseed.binance.org/" // BSC Mainnet
+                },
+                chainId: CONFIG.CURRENT_NETWORK,
+                qrcode: true // Показываем QR-код
+            });
+            
+            // Сохраняем провайдер
+            this.provider = provider;
+            
+            // Показываем уведомление о QR-коде
+            if (window.app) {
+                window.app.utils.showNotification(
+                    window.app.currentLanguage === 'ru' ? 
+                    'Сканируйте QR-код в мобильном кошельке' : 
+                    'Scan QR code with your mobile wallet', 
+                    'info'
+                );
+            }
+            
+            // Включаем провайдер (открывается QR-код)
+            await provider.enable();
+            
+            this.web3 = new Web3(provider);
+            
+            // Получаем аккаунт
+            const accounts = await this.web3.eth.getAccounts();
+            if (accounts.length === 0) {
+                throw new Error("No accounts found");
+            }
+            this.account = accounts[0];
+            
+            // Получаем networkId
+            this.networkId = await this.web3.eth.net.getId();
+            
+            // Проверяем сеть
+            await this.checkNetwork();
+            
+            // Инициализируем контракты
+            await this.initContracts();
+            
+            this.isConnected = true;
+            
+            // Настраиваем обработчики событий
+            this.setupWalletConnectEvents(provider);
+            
+            return this.account;
+            
+        } catch (error) {
+            console.error("WalletConnect connection error:", error);
+            throw error;
+        }
+    }
+
+
+    setupWalletConnectEvents(provider) {
+        // Обработка отключения
+        provider.on('disconnect', (code, reason) => {
+            console.log('WalletConnect disconnected:', reason);
+            this.isConnected = false;
+            this.account = null;
+            if (window.app) {
+                window.app.updateConnectButton(false);
+                window.app.utils.showNotification(
+                    window.app.currentLanguage === 'ru' ? 'Кошелек отключен' : 'Wallet disconnected', 
+                    'info'
+                );
+            }
+        });
+        
+        // Обработка смены аккаунта
+        provider.on('accountsChanged', (accounts) => {
+            if (accounts.length === 0) {
+                this.isConnected = false;
+                this.account = null;
+                if (window.app) {
+                    window.app.updateConnectButton(false);
+                }
+            } else {
+                this.account = accounts[0];
+                if (window.app) {
+                    window.app.updateUserInfo();
+                }
+            }
+        });
+        
+        // Обработка смены сети
+        provider.on('chainChanged', (chainId) => {
+            window.location.reload();
+        });
+    }
+
+    async connectMetaMask() {
         try {
             const accounts = await window.ethereum.request({
                 method: 'eth_requestAccounts'
@@ -35,12 +151,12 @@ class CryptoLandWeb3 {
             await this.initContracts();
             
             this.isConnected = true;
-            this.setupEventListeners();
+            this.setupMetaMaskEvents();
             
             return this.account;
             
         } catch (error) {
-            console.error("Connection error:", error);
+            console.error("MetaMask connection error:", error);
             throw error;
         }
     }
@@ -50,12 +166,17 @@ class CryptoLandWeb3 {
         
         if (parseInt(this.networkId) !== currentNetwork) {
             try {
-                await window.ethereum.request({
-                    method: 'wallet_switchEthereumChain',
-                    params: [{ chainId: CONFIG.NETWORKS[currentNetwork].chainId }]
-                });
+                if (this.walletType === 'metamask') {
+                    await window.ethereum.request({
+                        method: 'wallet_switchEthereumChain',
+                        params: [{ chainId: CONFIG.NETWORKS[currentNetwork].chainId }]
+                    });
+                } else {
+                    // Для WalletConnect показываем предупреждение
+                    throw new Error(`Please switch to ${CONFIG.NETWORKS[currentNetwork].name} in your wallet`);
+                }
             } catch (switchError) {
-                if (switchError.code === 4902) {
+                if (switchError.code === 4902 && this.walletType === 'metamask') {
                     await window.ethereum.request({
                         method: 'wallet_addEthereumChain',
                         params: [{
@@ -253,12 +374,14 @@ class CryptoLandWeb3 {
         this.usdtContract = new this.web3.eth.Contract(usdtABI, usdtAddress);
     }
 
-    setupEventListeners() {
+    setupMetaMaskEvents() {
         window.ethereum.on('accountsChanged', (accounts) => {
             if (accounts.length === 0) {
                 this.isConnected = false;
                 this.account = null;
-                window.location.reload();
+                if (window.app) {
+                    window.app.updateConnectButton(false);
+                }
             } else {
                 this.account = accounts[0];
                 if (window.app) {
@@ -275,7 +398,9 @@ class CryptoLandWeb3 {
             console.log('Wallet disconnected:', error);
             this.isConnected = false;
             this.account = null;
-            window.location.reload();
+            if (window.app) {
+                window.app.updateConnectButton(false);
+            }
         });
     }
 
@@ -337,7 +462,7 @@ class CryptoLandWeb3 {
         return await this.contract.methods.checkAndFinishDeposits()
             .send({
                 from: this.account,
-                gas: 500000 // Больше газа из-за цикла
+                gas: 500000
             });
     }
 
@@ -391,8 +516,8 @@ class CryptoLandWeb3 {
                 const tariff = await this.contract.methods.tariffs(i).call();
                 tariffs.push({
                     id: i,
-                    dailyPercent: parseInt(tariff.dailyPercent) / 100, // Конвертация в проценты
-                    duration: parseInt(tariff.duration) / (24 * 60 * 60), // Конвертация в дни
+                    dailyPercent: parseInt(tariff.dailyPercent) / 100,
+                    duration: parseInt(tariff.duration) / (24 * 60 * 60),
                     name: tariff.name,
                     name_en: tariff.name_en
                 });
