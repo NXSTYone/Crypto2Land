@@ -1,5 +1,5 @@
 const CONFIG = {
-    CONTRACT_ADDRESS: "0xВАШ_АДРЕС_КОНТРАКТА",
+    CONTRACT_ADDRESS: "0xa7B4bca95e2D0c4628c90ac81C82d9a0249A2543",
     
     NETWORKS: {
         56: {
@@ -475,4 +475,5 @@ CONFIG.getContractABI = async function() {
 };
 
 window.CONFIG = CONFIG;
+
 
