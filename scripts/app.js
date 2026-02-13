@@ -36,7 +36,8 @@ class CryptoLandApp {
         // Загрузка тарифов из контракта
         await this.loadTariffsFromContract();
         
-        await this.checkConnection();
+        // АВТОПОДКЛЮЧЕНИЕ УДАЛЕНО - кнопка всегда в состоянии "ПОДКЛЮЧИТЬ"
+        // this.checkConnection() - удалено
     }
 
     async loadTariffsFromContract() {
@@ -88,6 +89,13 @@ class CryptoLandApp {
         
         this.updateAllText();
         this.renderTariffs();
+        
+        // Обновляем текст кнопки при смене языка (если подключен)
+        if (this.web3 && this.web3.isConnected) {
+            this.updateConnectButton(true);
+        } else {
+            this.updateConnectButton(false);
+        }
     }
 
 
@@ -120,6 +128,33 @@ class CryptoLandApp {
             if (investTitle) {
                 const tariffName = this.currentLanguage === 'ru' ? this.selectedTariff.name : this.selectedTariff.name_en;
                 investTitle.textContent = `${t.invest_title} ${tariffName}`;
+            }
+        }
+    }
+
+    /**
+     * @dev Обновление текста и стиля кнопки подключения
+     */
+    updateConnectButton(isConnected) {
+        const connectBtn = document.getElementById('headerConnectBtn');
+        const connectBtnText = document.getElementById('connectBtnText');
+        const connectBtnIcon = connectBtn ? connectBtn.querySelector('i') : null;
+        
+        if (!connectBtn || !connectBtnText) return;
+        
+        if (isConnected) {
+            // Подключен - зеленый цвет, текст "ПОДКЛЮЧЕН"
+            connectBtnText.textContent = this.currentLanguage === 'ru' ? 'ПОДКЛЮЧЕН' : 'CONNECTED';
+            connectBtn.classList.add('connected');
+            if (connectBtnIcon) {
+                connectBtnIcon.className = 'fas fa-check-circle';
+            }
+        } else {
+            // Не подключен - золотой цвет, текст "ПОДКЛЮЧИТЬ"
+            connectBtnText.textContent = this.currentLanguage === 'ru' ? 'ПОДКЛЮЧИТЬ' : 'CONNECT';
+            connectBtn.classList.remove('connected');
+            if (connectBtnIcon) {
+                connectBtnIcon.className = 'fas fa-plug';
             }
         }
     }
@@ -159,6 +194,7 @@ class CryptoLandApp {
         }
     }
 
+
     setupAvatar() {
         const avatarImage = document.getElementById('avatarImage');
         const avatarFallback = document.getElementById('avatarFallback');
@@ -182,7 +218,6 @@ class CryptoLandApp {
             };
         }
     }
-
 
     setSocialLinks() {
         const supportLink = document.getElementById('telegramSupportLink');
@@ -258,6 +293,7 @@ class CryptoLandApp {
             });
         }
 
+
         // Подключение кошелька
         const connectBtn = document.getElementById('headerConnectBtn');
         if (connectBtn) {
@@ -291,7 +327,6 @@ class CryptoLandApp {
                 this.hideModal('walletModal');
             });
         }
-
 
         // Инвестирование
         const confirmInvest = document.getElementById('confirmInvest');
@@ -369,6 +404,7 @@ class CryptoLandApp {
             });
         }
 
+
         // Фильтры депозитов
         document.querySelectorAll('.filter-pill').forEach(pill => {
             pill.addEventListener('click', (e) => {
@@ -406,7 +442,6 @@ class CryptoLandApp {
                 this.filterRankings(e.target.value);
             });
         }
-
 
         // Фильтры транзакций
         const dateFilter = document.getElementById('transactionDateFilter');
@@ -462,24 +497,8 @@ class CryptoLandApp {
         this.showModal('mayorPhrasesModal');
     }
 
-    async checkConnection() {
-        if (window.ethereum && window.ethereum.selectedAddress) {
-            try {
-                await this.web3.init();
-                await this.updateUserInfo();
-                await this.loadDeposits();
-                this.utils.showNotification(
-                    this.currentLanguage === 'ru' ? 'Кошелек подключен' : 'Wallet connected', 
-                    'success'
-                );
-                return true;
-            } catch (error) {
-                console.error('Connection error:', error);
-                return false;
-            }
-        }
-        return false;
-    }
+    // Функция checkConnection() ПОЛНОСТЬЮ УДАЛЕНА
+
 
     async connectWallet() {
         try {
@@ -488,22 +507,30 @@ class CryptoLandApp {
                 this.currentLanguage === 'ru' ? 'Подключение кошелька...' : 'Connecting wallet...', 
                 'info'
             );
+            
             await this.web3.init();
             await this.updateUserInfo();
             await this.loadDeposits();
+            
+            // Обновляем кнопку на "ПОДКЛЮЧЕН"
+            this.updateConnectButton(true);
+            
             this.utils.showNotification(
                 this.currentLanguage === 'ru' ? 'Кошелек успешно подключен!' : 'Wallet connected successfully!', 
                 'success'
             );
             this.updateReferralLink();
+            
         } catch (error) {
+            console.error('Connection error:', error);
             this.utils.showNotification(
                 this.currentLanguage === 'ru' ? 'Ошибка подключения' : 'Connection error', 
                 'error'
             );
+            // При ошибке кнопка должна быть "ПОДКЛЮЧИТЬ"
+            this.updateConnectButton(false);
         }
     }
-
 
     async updateUserInfo() {
         if (!this.web3 || !this.web3.isConnected) return;
