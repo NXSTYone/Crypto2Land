@@ -36,8 +36,30 @@ class CryptoLandApp {
         // Загрузка тарифов из контракта
         await this.loadTariffsFromContract();
         
+        // ===== ДОБАВЛЕНО: ПРОВЕРКА НА TELEGRAM MINI APP =====
+        if (this.isTelegramMiniApp()) {
+            console.log("✅ Приложение запущено в Telegram Mini App");
+            // Показываем уведомление через 2 секунды
+            setTimeout(() => {
+                this.utils.showNotification(
+                    this.currentLanguage === 'ru' ? 
+                    'Для подключения в Telegram используйте WalletConnect' : 
+                    'To connect in Telegram, use WalletConnect', 
+                    'info'
+                );
+            }, 2000);
+        }
+        // ===== КОНЕЦ ДОБАВЛЕНИЯ =====
+        
         // АВТОПОДКЛЮЧЕНИЕ УДАЛЕНО - кнопка всегда в состоянии "ПОДКЛЮЧИТЬ"
         // this.checkConnection() - удалено
+    }
+
+    /**
+     * @dev Проверка, запущено ли приложение в Telegram Mini App
+     */
+    isTelegramMiniApp() {
+        return window.Telegram && Telegram.WebApp && Telegram.WebApp.initData !== '';
     }
 
     async loadTariffsFromContract() {
@@ -97,7 +119,6 @@ class CryptoLandApp {
             this.updateConnectButton(false);
         }
     }
-
 
     updateAllText() {
         const t = CONFIG.TRANSLATIONS[this.currentLanguage];
@@ -193,7 +214,6 @@ class CryptoLandApp {
             if (preloaderFallback) preloaderFallback.style.display = 'flex';
         }
     }
-
 
     setupAvatar() {
         const avatarImage = document.getElementById('avatarImage');
@@ -292,7 +312,6 @@ class CryptoLandApp {
                 scrollToStats.classList.add('active');
             });
         }
-
 
         // Подключение кошелька
         const connectBtn = document.getElementById('headerConnectBtn');
@@ -404,7 +423,6 @@ class CryptoLandApp {
             });
         }
 
-
         // Фильтры депозитов
         document.querySelectorAll('.filter-pill').forEach(pill => {
             pill.addEventListener('click', (e) => {
@@ -499,7 +517,6 @@ class CryptoLandApp {
 
     // Функция checkConnection() ПОЛНОСТЬЮ УДАЛЕНА
 
-
     async connectWallet() {
         try {
             this.hideModal('walletModal');
@@ -576,7 +593,6 @@ class CryptoLandApp {
         }
     }
 
-
     renderTariffs() {
         const container = document.getElementById('tariffsGrid');
         if (!container) return;
@@ -639,7 +655,6 @@ class CryptoLandApp {
             </tr>
         `).join('');
     }
-
 
     showTab(tabName) {
         document.querySelectorAll('.content-section').forEach(s => {
@@ -723,7 +738,6 @@ class CryptoLandApp {
             balanceElement.textContent = '0.00 USDT';
         }
     }
-
 
     updateInvestmentSummary() {
         const amount = parseFloat(document.getElementById('investAmount')?.value) || 10;
@@ -824,7 +838,6 @@ class CryptoLandApp {
             'success'
         );
     }
-
 
     async withdrawIncome() {
         if (!this.web3 || !this.web3.isConnected) {
@@ -934,7 +947,6 @@ class CryptoLandApp {
         }
     }
 
-
     async loadDeposits() {
         const container = document.getElementById('depositsGrid');
         const emptyState = document.getElementById('emptyDeposits');
@@ -1012,7 +1024,6 @@ class CryptoLandApp {
                                 </div>
                             </div>
                             <div class="deposit-actions">
-
                                 <button class="deposit-btn withdraw" data-deposit-id="${index}">
                                     <i class="fas fa-download"></i>
                                     ${t.withdraw_income || 'Вывести'}
@@ -1119,7 +1130,6 @@ class CryptoLandApp {
     filterTransactionsByType(typeFilter) {
         console.log('Type filter:', typeFilter);
     }
-
 
     showModal(modalId) {
         const overlay = document.getElementById('modalOverlay');
