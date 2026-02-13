@@ -22,7 +22,7 @@ const CONFIG = {
     
     USDT_ADDRESS: {
         56: "0x55d398326f99059fF775485246999027B3197955",
-        97: "0x7ef95a0FEE0Dd31b22626fA2e10Ee6A223F8a684"
+        97: "0x1434575AbB0C8887D6DdFF6F1F2d0d5B29B9bC2c"
     },
     
     // СОЦИАЛЬНЫЕ ССЫЛКИ
@@ -858,6 +858,7 @@ CONFIG.getContractABI = async function() {
 };
 
 window.CONFIG = CONFIG;
+
 
 
 
