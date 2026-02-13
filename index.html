@@ -32,6 +32,7 @@
         </div>
     </div>
 
+
     <div class="app-container">
         <main class="main-content full-width">
             <!-- ШАПКА С ЛОГОТИПОМ И АВАТАРОМ -->
@@ -76,7 +77,6 @@
                     </div>
                     
                     <div class="wallet-header-container">
-
                         <div class="wallet-mini-info">
                             <span class="wallet-mini-label">USDT</span>
                             <span class="wallet-mini-balance" id="headerWalletBalance">0.00</span>
@@ -88,6 +88,7 @@
                     </div>
                 </div>
             </header>
+
 
             <!-- ВЕРТИКАЛЬНАЯ НАВИГАЦИЯ -->
             <div class="navigation-vertical">
@@ -737,6 +738,7 @@
                 </div>
             </div>
 
+
             <div class="wallet-instructions">
                 <h4><i class="fas fa-info-circle"></i> <span data-i18n="instructions">Инструкция:</span></h4>
                 <ol>
@@ -747,12 +749,12 @@
                 </ol>
             </div>
             
-<div class="telegram-note" style="margin-top: 15px; padding: 10px; background: rgba(255,215,0,0.1); border-radius: 10px; border-left: 3px solid var(--accent-gold);">
-    <p style="font-size: 13px; color: var(--text-secondary); margin: 0;">
-        <i class="fas fa-info-circle" style="color: var(--accent-gold); margin-right: 8px;"></i>
-        <span data-i18n="telegram_note">Если вы в Telegram: используйте WalletConnect или откройте приложение в браузере</span>
-    </p>
-</div>
+            <div class="telegram-note" style="margin-top: 15px; padding: 10px; background: rgba(255,215,0,0.1); border-radius: 10px; border-left: 3px solid var(--accent-gold);">
+                <p style="font-size: 13px; color: var(--text-secondary); margin: 0;">
+                    <i class="fas fa-info-circle" style="color: var(--accent-gold); margin-right: 8px;"></i>
+                    <span data-i18n="telegram_note">Если вы в Telegram: используйте WalletConnect или откройте приложение в браузере</span>
+                </p>
+            </div>
             
             <div class="modal-actions">
                 <button class="modal-btn secondary" id="cancelWallet"><span data-i18n="cancel">Отмена</span></button>
@@ -810,6 +812,7 @@
                         </div>
                         <div class="summary-row">
                             <span data-i18n="daily_income">Доход в день:</span>
+
                             <span id="summaryDaily">0.05 USDT</span>
                         </div>
                         <div class="summary-row">
@@ -871,6 +874,8 @@
     <!-- КОНТЕЙНЕР УВЕДОМЛЕНИЙ -->
     <div class="notifications-container" id="notificationsContainer"></div>
 
+    <!-- ===== ДОБАВЛЕНО: ПОДКЛЮЧЕНИЕ БИБЛИОТЕКИ WALLETCONNECT ===== -->
+    <script src="https://cdn.jsdelivr.net/npm/@walletconnect/web3-provider@1.8.0/dist/umd/index.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/web3@1.7.3/dist/web3.min.js"></script>
     <script src="scripts/config.js"></script>
     <script src="scripts/web3.js"></script>
@@ -878,8 +883,4 @@
     <script src="scripts/app.js"></script>
 </body>
 </html>
-
-
-
-
 
