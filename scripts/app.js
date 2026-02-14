@@ -36,10 +36,9 @@ class CryptoLandApp {
         // Загрузка тарифов из контракта
         await this.loadTariffsFromContract();
         
-        // ===== ДОБАВЛЕНО: ПРОВЕРКА НА TELEGRAM MINI APP =====
+        // Проверка на Telegram Mini App
         if (this.isTelegramMiniApp()) {
             console.log("✅ Приложение запущено в Telegram Mini App");
-            // Показываем уведомление через 2 секунды
             setTimeout(() => {
                 this.utils.showNotification(
                     this.currentLanguage === 'ru' ? 
@@ -49,22 +48,14 @@ class CryptoLandApp {
                 );
             }, 2000);
         }
-        // ===== КОНЕЦ ДОБАВЛЕНИЯ =====
-        
-        // АВТОПОДКЛЮЧЕНИЕ УДАЛЕНО - кнопка всегда в состоянии "ПОДКЛЮЧИТЬ"
-        // this.checkConnection() - удалено
     }
 
-    /**
-     * @dev Проверка, запущено ли приложение в Telegram Mini App
-     */
     isTelegramMiniApp() {
         return window.Telegram && Telegram.WebApp && Telegram.WebApp.initData !== '';
     }
 
     async loadTariffsFromContract() {
         try {
-            // Пробуем загрузить тарифы из контракта
             if (this.web3 && this.web3.isConnected) {
                 const contractTariffs = await this.web3.getTariffs();
                 if (contractTariffs && contractTariffs.length > 0) {
@@ -75,20 +66,15 @@ class CryptoLandApp {
                 }
             }
             
-            // Если не удалось загрузить из контракта, используем локальные
             console.log("⚠️ Используем локальные тарифы");
             this.useLocalTariffs();
             
         } catch (error) {
             console.error('❌ Ошибка загрузки тарифов из контракта:', error);
-            // В случае ошибки используем локальные тарифы
             this.useLocalTariffs();
         }
     }
 
-    /**
-     * Использование локальных тарифов (запасной вариант)
-     */
     useLocalTariffs() {
         this.tariffs = [
             { id: 0, name: "Спальный район", name_en: "Residential District", dailyPercent: 0.5, duration: 3 },
@@ -133,7 +119,6 @@ class CryptoLandApp {
         this.updateAllText();
         this.renderTariffs();
         
-        // Обновляем текст кнопки при смене языка (если подключен)
         if (this.web3 && this.web3.isConnected) {
             this.updateConnectButton(true);
         } else {
@@ -174,9 +159,6 @@ class CryptoLandApp {
         }
     }
 
-    /**
-     * @dev Обновление текста и стиля кнопки подключения
-     */
     updateConnectButton(isConnected) {
         const connectBtn = document.getElementById('headerConnectBtn');
         const connectBtnText = document.getElementById('connectBtnText');
@@ -185,14 +167,12 @@ class CryptoLandApp {
         if (!connectBtn || !connectBtnText) return;
         
         if (isConnected) {
-            // Подключен - зеленый цвет, текст "ПОДКЛЮЧЕН"
             connectBtnText.textContent = this.currentLanguage === 'ru' ? 'ПОДКЛЮЧЕН' : 'CONNECTED';
             connectBtn.classList.add('connected');
             if (connectBtnIcon) {
                 connectBtnIcon.className = 'fas fa-check-circle';
             }
         } else {
-            // Не подключен - золотой цвет, текст "ПОДКЛЮЧИТЬ"
             connectBtnText.textContent = this.currentLanguage === 'ru' ? 'ПОДКЛЮЧИТЬ' : 'CONNECT';
             connectBtn.classList.remove('connected');
             if (connectBtnIcon) {
@@ -271,7 +251,6 @@ class CryptoLandApp {
     }
 
     initEvents() {
-        // Вертикальная навигация
         document.querySelectorAll('.nav-menu-item').forEach(item => {
             item.addEventListener('click', (e) => {
                 const tabName = item.dataset.tab;
@@ -279,7 +258,6 @@ class CryptoLandApp {
             });
         });
 
-        // Аватар мэра
         const avatarContainer = document.getElementById('mayorAvatarContainer');
         if (avatarContainer) {
             avatarContainer.addEventListener('click', () => {
@@ -287,7 +265,6 @@ class CryptoLandApp {
             });
         }
 
-        // Закрыть модалку фраз
         const closeMayorModal = document.getElementById('closeMayorModal');
         if (closeMayorModal) {
             closeMayorModal.addEventListener('click', () => {
@@ -295,7 +272,6 @@ class CryptoLandApp {
             });
         }
 
-        // Новая фраза
         const newPhraseBtn = document.getElementById('newPhraseBtn');
         if (newPhraseBtn) {
             newPhraseBtn.addEventListener('click', () => {
@@ -303,7 +279,6 @@ class CryptoLandApp {
             });
         }
 
-        // Навигация по таблице уровней
         const scrollToConditions = document.getElementById('scrollToConditions');
         if (scrollToConditions) {
             scrollToConditions.addEventListener('click', () => {
@@ -334,7 +309,6 @@ class CryptoLandApp {
             });
         }
 
-        // Подключение кошелька
         const connectBtn = document.getElementById('headerConnectBtn');
         if (connectBtn) {
             connectBtn.addEventListener('click', () => {
@@ -342,7 +316,6 @@ class CryptoLandApp {
             });
         }
 
-        // Опции кошельков
         document.querySelectorAll('.wallet-option').forEach(option => {
             option.addEventListener('click', (e) => {
                 document.querySelectorAll('.wallet-option').forEach(opt => 
@@ -353,7 +326,6 @@ class CryptoLandApp {
             });
         });
 
-        // Кнопки в модалке кошелька
         const connectWallet = document.getElementById('connectWallet');
         if (connectWallet) {
             connectWallet.addEventListener('click', async () => {
@@ -368,7 +340,6 @@ class CryptoLandApp {
             });
         }
 
-        // Инвестирование
         const confirmInvest = document.getElementById('confirmInvest');
         if (confirmInvest) {
             confirmInvest.addEventListener('click', async () => {
@@ -390,7 +361,6 @@ class CryptoLandApp {
             });
         }
 
-        // Реферальная ссылка
         const copyRefLink = document.getElementById('copyRefLink');
         if (copyRefLink) {
             copyRefLink.addEventListener('click', async () => {
@@ -398,7 +368,6 @@ class CryptoLandApp {
             });
         }
 
-        // Вывод средств
         const withdrawIncome = document.getElementById('withdrawIncomeBtn');
         if (withdrawIncome) {
             withdrawIncome.addEventListener('click', async () => {
@@ -413,7 +382,6 @@ class CryptoLandApp {
             });
         }
 
-        // Кнопка вывода реферальных
         const withdrawReferralBtn = document.getElementById('withdrawReferralBtn');
         if (withdrawReferralBtn) {
             withdrawReferralBtn.addEventListener('click', async () => {
@@ -421,7 +389,6 @@ class CryptoLandApp {
             });
         }
 
-        // Кнопка проверки депозитов
         const checkDeposits = document.getElementById('checkDepositsBtn');
         if (checkDeposits) {
             checkDeposits.addEventListener('click', async () => {
@@ -429,7 +396,6 @@ class CryptoLandApp {
             });
         }
 
-        // Кнопки "Начать инвестировать"
         const goToInvest = document.getElementById('goToInvest');
         if (goToInvest) {
             goToInvest.addEventListener('click', () => {
@@ -444,7 +410,6 @@ class CryptoLandApp {
             });
         }
 
-        // Фильтры депозитов
         document.querySelectorAll('.filter-pill').forEach(pill => {
             pill.addEventListener('click', (e) => {
                 document.querySelectorAll('.filter-pill').forEach(p => 
@@ -455,7 +420,6 @@ class CryptoLandApp {
             });
         });
 
-        // Обновление депозитов
         const refreshDeposits = document.getElementById('refreshDeposits');
         if (refreshDeposits) {
             refreshDeposits.addEventListener('click', async () => {
@@ -463,7 +427,6 @@ class CryptoLandApp {
             });
         }
 
-        // Фильтры рейтинга
         document.querySelectorAll('.ranking-type-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 document.querySelectorAll('.ranking-type-btn').forEach(b => 
@@ -474,7 +437,6 @@ class CryptoLandApp {
             });
         });
 
-        // Поиск по рейтингу
         const searchInput = document.querySelector('.ranking-search-input');
         if (searchInput) {
             searchInput.addEventListener('input', (e) => {
@@ -482,7 +444,6 @@ class CryptoLandApp {
             });
         }
 
-        // Фильтры транзакций
         const dateFilter = document.getElementById('transactionDateFilter');
         if (dateFilter) {
             dateFilter.addEventListener('change', (e) => {
@@ -497,7 +458,6 @@ class CryptoLandApp {
             });
         }
 
-        // Закрытие модалок
         document.querySelectorAll('.modal-close').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const modal = e.currentTarget.closest('.modal');
@@ -536,8 +496,6 @@ class CryptoLandApp {
         this.showModal('mayorPhrasesModal');
     }
 
-    // Функция checkConnection() ПОЛНОСТЬЮ УДАЛЕНА
-
     async connectWallet() {
         try {
             this.hideModal('walletModal');
@@ -546,14 +504,12 @@ class CryptoLandApp {
                 'info'
             );
             
-            // ✅ ПЕРЕДАЕМ ВЫБРАННЫЙ ТИП КОШЕЛЬКА В web3.init()
             await this.web3.init(this.selectedWallet);
             
             await this.updateUserInfo();
             await this.loadDeposits();
-            await this.renderLevels(); // Обновляем таблицу уровней с бонусами
+            await this.renderLevels();
             
-            // Обновляем кнопку на "ПОДКЛЮЧЕН"
             this.updateConnectButton(true);
             
             this.utils.showNotification(
@@ -568,12 +524,10 @@ class CryptoLandApp {
                 this.currentLanguage === 'ru' ? 'Ошибка подключения: ' + error.message : 'Connection error: ' + error.message, 
                 'error'
             );
-            // При ошибке кнопка должна быть "ПОДКЛЮЧИТЬ"
             this.updateConnectButton(false);
         }
     }
 
-    // ============ ИСПРАВЛЕННАЯ ФУНКЦИЯ UPDATEUSERINFO ============
     async updateUserInfo() {
         if (!this.web3 || !this.web3.isConnected) return;
         
@@ -582,21 +536,17 @@ class CryptoLandApp {
             const stats = await this.web3.getUserStats();
             const mayorBonusStats = await this.web3.getMayorBonusStats();
             
-            // Обновление шапки
             document.getElementById('headerWalletBalance').textContent = this.utils.formatNumber(usdtBalance, 2);
             
-            // Обновление статистики на панели мэра
             document.getElementById('statPopulation').textContent = stats.totalDeposits > 0 ? 'Активно' : '0';
             document.getElementById('statTotal').textContent = this.utils.formatNumber(stats.totalDeposits, 2) + ' USDT';
             document.getElementById('statTaxes').textContent = this.utils.formatNumber(stats.availableReferral, 2) + ' USDT';
             document.getElementById('statIncome').textContent = this.utils.formatNumber(stats.availableInterest, 2) + ' USDT';
             
-            // Обновление городской казны
             document.getElementById('treasuryIncome').textContent = this.utils.formatNumber(stats.availableInterest, 2) + ' USDT';
             document.getElementById('treasuryTax').textContent = this.utils.formatNumber(stats.availableReferral, 2) + ' USDT';
             document.getElementById('treasuryDeposit').textContent = this.utils.formatNumber(stats.activeDeposits, 2) + ' USDT';
             
-            // Обновление сводки в Моих районах
             document.getElementById('summaryTotal').textContent = this.utils.formatNumber(stats.totalDeposits, 2) + ' USDT';
             document.getElementById('summaryActive').textContent = this.utils.formatNumber(stats.activeDeposits, 2) + ' USDT';
             document.getElementById('summaryAccumulated').textContent = this.utils.formatNumber(stats.totalEarned, 2) + ' USDT';
@@ -604,31 +554,23 @@ class CryptoLandApp {
                 parseFloat(stats.availableInterest) + parseFloat(stats.availableReferral), 2
             ) + ' USDT';
             
-            // Обновление налоговой
-            document.getElementById('totalReferrals').textContent = '0'; // TODO: добавить в контракт
+            document.getElementById('totalReferrals').textContent = '0';
             document.getElementById('totalTaxes').textContent = this.utils.formatNumber(stats.availableReferral, 2) + ' USDT';
             document.getElementById('totalTurnover').textContent = this.utils.formatNumber(stats.totalDeposits, 2) + ' USDT';
             
-            // ===== ИСПРАВЛЕННЫЙ БОНУС МЭРА =====
             const mayorBonusElement = document.getElementById('mayorBonus');
             
             if (mayorBonusStats.anyLevelActive) {
-                // Подсчитываем, на скольких уровнях активен бонус
                 const activeLevels = mayorBonusStats.levelBonuses.filter(bonus => bonus).length;
                 mayorBonusElement.textContent = `Активен (${activeLevels} ур.)`;
                 mayorBonusElement.classList.add('bonus-active');
                 mayorBonusElement.classList.remove('bonus-inactive');
-                
-                console.log("Бонус мэра активен на уровнях:", 
-                    mayorBonusStats.levelBonuses.map((active, idx) => active ? idx + 1 : null).filter(v => v));
             } else {
                 mayorBonusElement.textContent = 'Неактивен';
                 mayorBonusElement.classList.add('bonus-inactive');
                 mayorBonusElement.classList.remove('bonus-active');
             }
-            // ====================================
             
-            // Активация кнопок вывода
             document.getElementById('withdrawIncomeBtn').disabled = parseFloat(stats.availableInterest) <= 0;
             document.getElementById('withdrawTaxBtn').disabled = parseFloat(stats.availableReferral) <= 0;
             
@@ -650,11 +592,9 @@ class CryptoLandApp {
             return;
         }
         
-        console.log("📊 Рендерим тарифы:", this.tariffs);
-        
         container.innerHTML = this.tariffs.map(tariff => {
             const name = this.currentLanguage === 'ru' ? tariff.name : tariff.name_en;
-            const isPremium = tariff.id >= 3; // Первые 3 не премиум
+            const isPremium = tariff.id >= 3;
             
             return `
                 <div class="tariff-card ${isPremium ? 'premium' : ''}" data-tariff="${tariff.id}">
@@ -689,7 +629,6 @@ class CryptoLandApp {
         });
     }
 
-    // ============ ИСПРАВЛЕННАЯ ФУНКЦИЯ RENDERLEVELS ============
     async renderLevels() {
         const container = document.getElementById('levelsBody');
         if (!container) return;
@@ -699,7 +638,6 @@ class CryptoLandApp {
         const turnovers = [0, 500, 1000, 2000, 3000, 5000, 7000, 10000, 15000, 20000, 30000, 40000, 50000, 75000, 100000];
         const deposits = [10, 50, 50, 100, 100, 250, 250, 500, 500, 750, 750, 1250, 1250, 2000, 2500];
         
-        // Получаем статистику бонуса мэра, если подключен кошелек
         let levelBonuses = new Array(15).fill(false);
         let levelDeposits = new Array(15).fill('0');
         
@@ -719,7 +657,6 @@ class CryptoLandApp {
             const userTurnover = parseFloat(levelDeposits[index] || '0');
             const requiredTurnover = turnovers[index];
             
-            // Определяем статус для отображения
             let statusText = t.bonus_inactive;
             let statusClass = 'bonus-inactive';
             
@@ -765,7 +702,7 @@ class CryptoLandApp {
         
         if (tabName === 'tax') {
             this.updateReferralLink();
-            this.renderLevels(); // Обновляем таблицу уровней при переходе на страницу налоговой
+            this.renderLevels();
             
             document.querySelectorAll('.levels-nav-btn').forEach(btn => {
                 btn.classList.remove('active');
@@ -887,7 +824,7 @@ class CryptoLandApp {
             this.hideModal('investModal');
             await this.updateUserInfo();
             await this.loadDeposits();
-            await this.renderLevels(); // Обновляем таблицу уровней после инвестиции
+            await this.renderLevels();
             
         } catch (error) {
             console.error('Investment error:', error);
@@ -946,8 +883,7 @@ class CryptoLandApp {
                 'info'
             );
             
-            // Выводим все проценты через withdrawPendingInterest
-            await this.web3.withdrawPendingInterest();
+            await this.web3.withdrawInterest();
             
             this.utils.showNotification(
                 this.currentLanguage === 'ru' ? 'Проценты успешно выведены!' : 'Interest withdrawn successfully!', 
@@ -988,7 +924,7 @@ class CryptoLandApp {
             );
             
             await this.updateUserInfo();
-            await this.renderLevels(); // Обновляем таблицу уровней после вывода
+            await this.renderLevels();
             
         } catch (error) {
             console.error('Referral withdraw error:', error);
@@ -1023,7 +959,7 @@ class CryptoLandApp {
             
             await this.updateUserInfo();
             await this.loadDeposits();
-            await this.renderLevels(); // Обновляем таблицу уровней после проверки
+            await this.renderLevels();
             
         } catch (error) {
             console.error('Check deposits error:', error);
@@ -1128,7 +1064,6 @@ class CryptoLandApp {
                 `;
             }).join('');
             
-            // Добавляем обработчики для кнопок вывода
             document.querySelectorAll('.deposit-btn.withdraw').forEach(btn => {
                 btn.addEventListener('click', async (e) => {
                     const depositId = e.currentTarget.dataset.depositId;
@@ -1158,7 +1093,7 @@ class CryptoLandApp {
                 'info'
             );
             
-            await this.web3.withdrawInterest(depositId);
+            await this.web3.withdrawInterest();
             
             this.utils.showNotification(
                 this.currentLanguage === 'ru' ? 'Проценты успешно выведены!' : 'Interest withdrawn successfully!', 
@@ -1167,7 +1102,7 @@ class CryptoLandApp {
             
             await this.updateUserInfo();
             await this.loadDeposits();
-            await this.renderLevels(); // Обновляем таблицу уровней после вывода
+            await this.renderLevels();
             
         } catch (error) {
             console.error('Withdraw error:', error);
@@ -1199,7 +1134,6 @@ class CryptoLandApp {
     }
 
     async loadRankings(type) {
-        // Заглушка для рейтинга
         document.getElementById('podiumName1').textContent = 'CryptoKing';
         document.getElementById('podiumValue1').textContent = '15,780 USDT';
         document.getElementById('podiumName2').textContent = 'BlockchainMaster';
