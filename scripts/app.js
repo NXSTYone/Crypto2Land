@@ -14,6 +14,7 @@ class CryptoLandApp {
         this.rankingType = 'tax';
         this.rankingPage = 1;
         this.rankingSearch = '';
+        this.pendingReferrer = null; // Добавлено для хранения временного реферера из URL
         
         // Фразы мэра из конфига
         this.mayorPhrases = CONFIG.MAYOR_PHRASES;
@@ -39,6 +40,20 @@ class CryptoLandApp {
         this.initEvents();
         this.initLanguage();
         
+        // ===== НОВЫЙ КОД: ОБРАБОТКА РЕФЕРАЛЬНОЙ ССЫЛКИ =====
+        const urlParams = new URLSearchParams(window.location.search);
+        const referrer = urlParams.get('ref');
+        
+        // Проверяем, есть ли параметр ref и валидный ли это адрес
+        if (referrer && this.utils.isValidAddress(referrer)) {
+            // Сохраняем реферера временно и показываем модалку через 1.5 секунды
+            this.pendingReferrer = referrer;
+            setTimeout(() => {
+                this.showReferrerConfirmation(referrer);
+            }, 1500);
+        }
+        // ===== КОНЕЦ НОВОГО КОДА =====
+        
         // Загрузка тарифов из контракта
         await this.loadTariffsFromContract();
         
@@ -55,6 +70,160 @@ class CryptoLandApp {
             }, 2000);
         }
     }
+
+    // ===== НОВЫЕ ФУНКЦИИ ДЛЯ РЕФЕРАЛЬНОЙ ССЫЛКИ =====
+    
+    /**
+     * Проверяет, есть ли уже реферер у пользователя
+     */
+    async checkIfHasReferrer() {
+        if (!this.web3 || !this.web3.isConnected || !this.web3.account) return false;
+        
+        try {
+            // Вызываем контракт чтобы узнать, есть ли уже реферер
+            const referrer = await this.web3.contract.methods.referrerOf(this.web3.account).call();
+            return referrer !== '0x0000000000000000000000000000000000000000';
+        } catch (error) {
+            console.error('Error checking referrer:', error);
+            return false;
+        }
+    }
+    
+    /**
+     * Показывает модалку с вопросом о реферале
+     */
+    showReferrerConfirmation(referrerAddress) {
+        const t = CONFIG.TRANSLATIONS[this.currentLanguage];
+        const shortAddress = this.web3.formatAddress(referrerAddress);
+        
+        // Проверяем, существует ли уже модалка
+        let modal = document.getElementById('referrerConfirmModal');
+        if (!modal) {
+            // Создаем модалку, если её нет
+            modal = document.createElement('div');
+            modal.id = 'referrerConfirmModal';
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-header">
+                    <h3>
+                        <i class="fas fa-user-tag"></i>
+                        <span data-i18n="referrer_confirm_title">Подтверждение реферала</span>
+                    </h3>
+                    <button class="modal-close" id="closeReferrerModalBtn">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="referrer-confirm-content" style="text-align: center; padding: 20px;">
+                        <div style="font-size: 48px; color: var(--accent-gold); margin-bottom: 20px;">
+                            <i class="fas fa-question-circle"></i>
+                        </div>
+                        <p style="font-size: 16px; margin-bottom: 15px;" data-i18n="referrer_confirm_text">
+                            Вы перешли по реферальной ссылке от пользователя:
+                        </p>
+                        <p style="font-size: 18px; font-weight: 700; background: rgba(255,215,0,0.1); padding: 10px; border-radius: 10px; margin-bottom: 20px;" id="referrerAddressDisplay"></p>
+                        <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 25px;" data-i18n="referrer_confirm_note">
+                            Если вы подтвердите, при первой инвестиции этот пользователь станет вашим реферером.<br>
+                            Реферер будет получать процент от ваших доходов.
+                        </p>
+                        <div class="modal-actions" style="justify-content: center;">
+                            <button class="modal-btn secondary" id="declineReferrerBtn">
+                                <i class="fas fa-times"></i>
+                                <span data-i18n="referrer_decline">Нет, не хочу</span>
+                            </button>
+                            <button class="modal-btn primary" id="acceptReferrerBtn">
+                                <i class="fas fa-check"></i>
+                                <span data-i18n="referrer_accept">Да, подтвердить</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            // Добавляем обработчики событий для кнопок
+            document.getElementById('acceptReferrerBtn').addEventListener('click', () => this.acceptReferrer());
+            document.getElementById('declineReferrerBtn').addEventListener('click', () => this.declineReferrer());
+            document.getElementById('closeReferrerModalBtn').addEventListener('click', () => this.hideReferrerModal());
+        }
+        
+        // Обновляем адрес реферера в модалке
+        const addressDisplay = document.getElementById('referrerAddressDisplay');
+        if (addressDisplay) {
+            addressDisplay.textContent = shortAddress;
+        }
+        
+        // Показываем модалку
+        document.getElementById('modalOverlay').style.display = 'block';
+        modal.style.display = 'block';
+    }
+    
+    /**
+     * Скрыть модалку подтверждения
+     */
+    hideReferrerModal() {
+        const modal = document.getElementById('referrerConfirmModal');
+        if (modal) modal.style.display = 'none';
+        document.getElementById('modalOverlay').style.display = 'none';
+    }
+    
+    /**
+     * Пользователь подтвердил реферера
+     */
+    async acceptReferrer() {
+        if (!this.pendingReferrer) {
+            this.hideReferrerModal();
+            return;
+        }
+        
+        // Проверяем, есть ли уже реферер (была ли уже инвестиция)
+        const hasReferrer = await this.checkIfHasReferrer();
+        
+        if (hasReferrer) {
+            // Если уже есть реферер, показываем предупреждение
+            this.utils.showNotification(
+                this.currentLanguage === 'ru' ? 
+                'У вас уже есть реферер! Вы не можете сменить его.' : 
+                'You already have a referrer! You cannot change it.', 
+                'warning'
+            );
+            this.pendingReferrer = null;
+            this.hideReferrerModal();
+            return;
+        }
+        
+        // Если нет реферера, сохраняем нового (заменяет старого, если был)
+        localStorage.setItem('confirmedReferrer', this.pendingReferrer);
+        
+        this.utils.showNotification(
+            this.currentLanguage === 'ru' ? 
+            'Реферер подтвержден! Он будет применен при первой инвестиции.' : 
+            'Referrer confirmed! It will be applied on first investment.', 
+            'success'
+        );
+        console.log('✅ Реферер подтвержден:', this.pendingReferrer);
+        
+        this.pendingReferrer = null;
+        this.hideReferrerModal();
+    }
+    
+    /**
+     * Пользователь отказался от реферера
+     */
+    declineReferrer() {
+        // Просто игнорируем эту ссылку
+        this.utils.showNotification(
+            this.currentLanguage === 'ru' ? 
+            'Вы отказались от этой реферальной ссылки.' : 
+            'You declined this referral link.', 
+            'info'
+        );
+        console.log('❌ Отказ от реферера:', this.pendingReferrer);
+        this.pendingReferrer = null;
+        this.hideReferrerModal();
+    }
+    
+    // ===== КОНЕЦ НОВЫХ ФУНКЦИЙ =====
 
     isTelegramMiniApp() {
         return window.Telegram && Telegram.WebApp && Telegram.WebApp.initData !== '';
@@ -1139,6 +1308,7 @@ class CryptoLandApp {
         document.getElementById('summaryEndDate').textContent = endDate.toLocaleDateString(this.currentLanguage === 'ru' ? 'ru-RU' : 'en-US');
     }
 
+    // ===== ИСПРАВЛЕННАЯ ФУНКЦИЯ PROCESSINVESTMENT С ПОДДЕРЖКОЙ ПОДТВЕРЖДЕННОГО РЕФЕРЕРА =====
     async processInvestment() {
         if (!this.web3 || !this.web3.isConnected) {
             this.utils.showNotification(
@@ -1158,12 +1328,28 @@ class CryptoLandApp {
             return;
         }
         
+        // ===== ОБНОВЛЕННЫЙ КОД: ОПРЕДЕЛЕНИЕ РЕФЕРЕРА =====
         const referrerInput = document.getElementById('referrerAddress')?.value || '';
+        const confirmedReferrer = localStorage.getItem('confirmedReferrer');
+        
         let referrerAddress = '0x0000000000000000000000000000000000000000';
         
+        // Приоритет: поле ввода > подтвержденный реферер > пустой адрес
         if (referrerInput && this.utils.isValidAddress(referrerInput)) {
             referrerAddress = referrerInput;
+            console.log('📝 Используем реферера из поля ввода:', referrerAddress);
+            
+            // Если пользователь ввел адрес вручную, очищаем сохраненный
+            localStorage.removeItem('confirmedReferrer');
+            
+        } else if (confirmedReferrer && this.utils.isValidAddress(confirmedReferrer)) {
+            referrerAddress = confirmedReferrer;
+            console.log('🔗 Используем подтвержденного реферера из ссылки:', referrerAddress);
+            
+            // Очищаем после использования (однократное применение)
+            localStorage.removeItem('confirmedReferrer');
         }
+        // ===== КОНЕЦ ОБНОВЛЕННОГО КОДА =====
         
         try {
             this.utils.showNotification(
