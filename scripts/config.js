@@ -25,6 +25,11 @@ const CONFIG = {
         97: "0x7ef95a0FEE0Dd31b22626fA2e10Ee6A223F8a684"
     },
     
+    // ===== НОВЫЙ ПАРАМЕТР: URL СЕРВЕРА =====
+    // Замените на реальный URL после развертывания сервера
+    SERVER_URL: "http://localhost:3000", // Для теста локально
+    // SERVER_URL: "https://api.cryptoland.com", // Для продакшена
+    
     // СОЦИАЛЬНЫЕ ССЫЛКИ
     SOCIAL: {
         TELEGRAM_SUPPORT: "https://t.me/CRYPTOLAND_SUPPORT",
@@ -71,7 +76,6 @@ const CONFIG = {
         ru: {
             // Шапка
             connect_btn: "ПОДКЛЮЧИТЬ",
-
             logo_description: "ВИРТУАЛЬНЫЙ КРИПТО-МЕГАПОЛИС",
             
             // Навигация
@@ -168,7 +172,6 @@ const CONFIG = {
             table_type: "Тип операции",
             table_amount: "Сумма",
             table_date: "Дата и время",
-
             table_status: "Статус",
             table_hash: "Хэш транзакции",
             status_completed: "Завершено",
@@ -271,7 +274,6 @@ const CONFIG = {
             // Dashboard
             welcome_title: "CONTROL PANEL",
             welcome_subtitle: "Choose a district to develop your city",
-
             stat_population: "Population",
             stat_treasury: "Total Treasury",
             stat_taxes: "Tax Collection",
@@ -370,7 +372,6 @@ const CONFIG = {
             total_turnover: "Total turnover",
             mayor_bonus: "Mayor's bonus",
             bonus_inactive: "Inactive",
-
             bonus_active: "Active",
             
             // Referral levels
@@ -477,8 +478,6 @@ CONFIG.getContractABI = async function() {
 };
 
 window.CONFIG = CONFIG;
-
-
 
 
 
