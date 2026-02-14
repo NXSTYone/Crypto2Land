@@ -100,7 +100,6 @@ class CryptoLandWeb3 {
         }
     }
 
-
     setupWalletConnectEvents(provider) {
         // Обработка отключения
         provider.on('disconnect', (code, reason) => {
@@ -200,7 +199,6 @@ class CryptoLandWeb3 {
         }
     }
 
-
     async initContracts() {
         // ABI для контракта CryptoLand (минимальный набор для работы)
         const contractABI = [
@@ -214,6 +212,17 @@ class CryptoLandWeb3 {
                     {"name": "availableInterest", "type": "uint256"},
                     {"name": "availableReferral", "type": "uint256"},
                     {"name": "totalEarned", "type": "uint256"}
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [{"name": "user", "type": "address"}],
+                "name": "getMayorBonusStats",
+                "outputs": [
+                    {"name": "anyLevelActive", "type": "bool"},
+                    {"name": "levelDeposits", "type": "uint256[15]"},
+                    {"name": "levelBonuses", "type": "bool[15]"}
                 ],
                 "stateMutability": "view",
                 "type": "function"
@@ -307,7 +316,6 @@ class CryptoLandWeb3 {
         
         this.contract = new this.web3.eth.Contract(
             contractABI,
-
             CONFIG.CONTRACT_ADDRESS
         );
         
@@ -406,7 +414,6 @@ class CryptoLandWeb3 {
 
     // ============ ОСНОВНЫЕ ФУНКЦИИ ============
 
-
     async invest(amount, tariffId, referrer) {
         const weiAmount = this.web3.utils.toWei(amount.toString(), 'ether');
         
@@ -490,6 +497,24 @@ class CryptoLandWeb3 {
         }
     }
 
+    async getMayorBonusStats() {
+        try {
+            const result = await this.contract.methods.getMayorBonusStats(this.account).call();
+            return {
+                anyLevelActive: result.anyLevelActive,
+                levelDeposits: result.levelDeposits.map(val => this.web3.utils.fromWei(val, 'ether')),
+                levelBonuses: result.levelBonuses
+            };
+        } catch (error) {
+            console.error('Error getting mayor bonus stats:', error);
+            return {
+                anyLevelActive: false,
+                levelDeposits: new Array(15).fill('0'),
+                levelBonuses: new Array(15).fill(false)
+            };
+        }
+    }
+
     async getUserDeposits() {
         try {
             const deposits = await this.contract.methods.getUserDeposits(this.account).call();
@@ -505,7 +530,6 @@ class CryptoLandWeb3 {
             return [];
         }
     }
-
 
     async getTariffs() {
         try {
