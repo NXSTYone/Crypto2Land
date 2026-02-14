@@ -8,6 +8,12 @@ class CryptoLandApp {
         this.currentLanguage = CONFIG.LANGUAGE.default || 'ru';
         this.userDeposits = [];
         this.tariffs = [];
+        this.transactions = [];
+        this.filteredTransactions = [];
+        this.rankingData = [];
+        this.rankingType = 'tax';
+        this.rankingPage = 1;
+        this.rankingSearch = '';
         
         // Фразы мэра из конфига
         this.mayorPhrases = CONFIG.MAYOR_PHRASES;
@@ -427,35 +433,45 @@ class CryptoLandApp {
             });
         }
 
+        // ===== НОВЫЕ ОБРАБОТЧИКИ ДЛЯ РЕЙТИНГА =====
         document.querySelectorAll('.ranking-type-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 document.querySelectorAll('.ranking-type-btn').forEach(b => 
                     b.classList.remove('active')
                 );
                 btn.classList.add('active');
-                this.loadRankings(btn.dataset.type);
+                this.rankingType = btn.dataset.type;
+                this.rankingPage = 1;
+                this.loadRankings();
             });
         });
 
-        const searchInput = document.querySelector('.ranking-search-input');
-        if (searchInput) {
-            searchInput.addEventListener('input', (e) => {
-                this.filterRankings(e.target.value);
+        const rankingPeriodFilter = document.getElementById('rankingPeriodFilter');
+        if (rankingPeriodFilter) {
+            rankingPeriodFilter.addEventListener('change', () => {
+                this.rankingPage = 1;
+                this.loadRankings();
             });
         }
 
+        const rankingSearch = document.querySelector('.ranking-search-input');
+        if (rankingSearch) {
+            rankingSearch.addEventListener('input', (e) => {
+                this.rankingSearch = e.target.value.toLowerCase();
+                this.rankingPage = 1;
+                this.loadRankings();
+            });
+        }
+
+        // ===== ОБРАБОТЧИКИ ДЛЯ ИСТОРИИ =====
         const dateFilter = document.getElementById('transactionDateFilter');
         if (dateFilter) {
-            dateFilter.addEventListener('change', (e) => {
-                this.filterTransactionsByDate(e.target.value);
-            });
+            dateFilter.addEventListener('change', () => this.filterTransactions());
         }
 
         const typeFilter = document.getElementById('transactionTypeFilter');
         if (typeFilter) {
-            typeFilter.addEventListener('change', (e) => {
-                this.filterTransactionsByType(e.target.value);
-            });
+            typeFilter.addEventListener('change', () => this.filterTransactions());
         }
 
         document.querySelectorAll('.modal-close').forEach(btn => {
@@ -509,6 +525,7 @@ class CryptoLandApp {
             await this.updateUserInfo();
             await this.loadDeposits();
             await this.renderLevels();
+            await this.loadTransactionHistory();
             
             this.updateConnectButton(true);
             
@@ -526,6 +543,338 @@ class CryptoLandApp {
             );
             this.updateConnectButton(false);
         }
+    }
+
+    // ===== ИСПРАВЛЕННАЯ ФУНКЦИЯ ЗАГРУЗКИ ИСТОРИИ (БЕЗ ДЕМО-ДАННЫХ) =====
+    async loadTransactionHistory() {
+        if (!this.web3 || !this.web3.isConnected || !this.web3.account) {
+            // Просто показываем пустую таблицу
+            this.transactions = [];
+            this.filteredTransactions = [];
+            this.renderTransactions();
+            return;
+        }
+        
+        try {
+            // Получаем текущий блок для ограничения глубины поиска
+            const currentBlock = await this.web3.web3.eth.getBlockNumber();
+            const fromBlock = Math.max(0, currentBlock - 50000);
+            
+            const events = await this.web3.getTransactionHistory(this.web3.account, fromBlock);
+            
+            // Получаем реальные временные метки для каждого блока
+            const transactionsWithTime = [];
+            for (const tx of events) {
+                const timestamp = await this.web3.getBlockTimestamp(tx.blockNumber);
+                transactionsWithTime.push({
+                    ...tx,
+                    timestamp
+                });
+            }
+            
+            // Сортируем по времени (новые сверху)
+            this.transactions = transactionsWithTime.sort((a, b) => b.timestamp - a.timestamp);
+            this.filteredTransactions = [...this.transactions];
+            
+            console.log(`✅ Загружено ${this.transactions.length} транзакций`);
+            this.renderTransactions();
+            
+        } catch (error) {
+            console.error('Error loading transaction history:', error);
+            // При ошибке показываем пустую таблицу
+            this.transactions = [];
+            this.filteredTransactions = [];
+            this.renderTransactions();
+        }
+    }
+    
+    filterTransactions() {
+        const dateFilter = document.getElementById('transactionDateFilter').value;
+        const typeFilter = document.getElementById('transactionTypeFilter').value;
+        const searchValue = document.querySelector('.ranking-search-input')?.value?.toLowerCase() || '';
+        
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() / 1000;
+        const weekAgo = today - 7 * 86400;
+        const monthAgo = today - 30 * 86400;
+        
+        this.filteredTransactions = this.transactions.filter(tx => {
+            // Фильтр по дате
+            if (dateFilter !== 'all') {
+                switch(dateFilter) {
+                    case 'today':
+                        if (tx.timestamp < today) return false;
+                        break;
+                    case 'week':
+                        if (tx.timestamp < weekAgo) return false;
+                        break;
+                    case 'month':
+                        if (tx.timestamp < monthAgo) return false;
+                        break;
+                }
+            }
+            
+            // Фильтр по типу
+            if (typeFilter !== 'all' && tx.type !== typeFilter) return false;
+            
+            // Поиск по хэшу
+            if (searchValue) {
+                const hash = tx.transactionHash?.toLowerCase() || '';
+                if (!hash.includes(searchValue)) return false;
+            }
+            
+            return true;
+        });
+        
+        this.renderTransactions();
+    }
+    
+    renderTransactions() {
+        const container = document.getElementById('transactionsBody');
+        if (!container) return;
+        
+        if (this.filteredTransactions.length === 0) {
+            container.innerHTML = `
+                <tr>
+                    <td colspan="5" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                        Нет операций для отображения
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
+        const t = CONFIG.TRANSLATIONS[this.currentLanguage];
+        
+        container.innerHTML = this.filteredTransactions.map(tx => {
+            let typeIcon = '';
+            let typeText = '';
+            let amountClass = 'positive';
+            let levelHtml = '';
+            
+            switch(tx.type) {
+                case 'invest':
+                    typeIcon = 'fas fa-coins';
+                    typeText = t.type_invest;
+                    amountClass = 'negative';
+                    break;
+                case 'withdraw':
+                    typeIcon = 'fas fa-download';
+                    typeText = t.type_withdraw;
+                    amountClass = 'positive';
+                    break;
+                case 'referral':
+                    typeIcon = 'fas fa-users';
+                    typeText = t.type_referral;
+                    amountClass = 'positive';
+                    levelHtml = `<span class="level-badge-small" style="margin-left: 8px; background: rgba(255,215,0,0.2); color: var(--accent-gold); padding: 2px 6px; border-radius: 12px; font-size: 10px;">ур.${tx.level}</span>`;
+                    break;
+                case 'return':
+                    typeIcon = 'fas fa-undo-alt';
+                    typeText = t.type_return;
+                    amountClass = 'positive';
+                    break;
+            }
+            
+            const date = new Date(tx.timestamp * 1000);
+            const formattedDate = date.toLocaleDateString(this.currentLanguage === 'ru' ? 'ru-RU' : 'en-US', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            return `
+                <tr class="transaction-row">
+                    <td>
+                        <div class="transaction-type ${tx.type}">
+                            <i class="${typeIcon}"></i>
+                            <span>${typeText}</span>
+                            ${levelHtml}
+                        </div>
+                    </td>
+                    <td class="transaction-amount ${amountClass}">
+                        ${tx.type === 'invest' ? '-' : '+'} ${this.utils.formatNumber(tx.amount, 2)} USDT
+                    </td>
+                    <td>${formattedDate}</td>
+                    <td><span class="transaction-status completed">${t.status_completed}</span></td>
+                    <td class="transaction-hash">
+                        <a href="${CONFIG.NETWORKS[CONFIG.CURRENT_NETWORK].explorer}/tx/${tx.transactionHash}" target="_blank" style="color: var(--text-muted); text-decoration: none;">
+                            ${tx.transactionHash.slice(0, 10)}...
+                        </a>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    // ===== НОВАЯ ФУНКЦИЯ ЗАГРУЗКИ РЕЙТИНГА =====
+    async loadRankings() {
+        const serverUrl = CONFIG.SERVER_URL || 'http://localhost:3000';
+        const limit = 100;
+        
+        try {
+            // Определяем поле для сортировки
+            let orderBy = 'total_taxes DESC';
+            if (this.rankingType === 'population') orderBy = 'referral_count DESC';
+            if (this.rankingType === 'total') orderBy = 'total_income DESC';
+            
+            // Добавляем поиск
+            let url = `${serverUrl}/api/ranking?page=${this.rankingPage}&limit=${limit}&orderBy=${orderBy}`;
+            if (this.rankingSearch) {
+                url += `&search=${encodeURIComponent(this.rankingSearch)}`;
+            }
+            
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            this.rankingData = data.users || [];
+            this.renderRankings(data);
+            
+        } catch (error) {
+            console.error('Error loading rankings:', error);
+            this.showEmptyRankings();
+        }
+    }
+    
+    renderRankings(data) {
+        const users = data.users || [];
+        const totalPages = data.totalPages || 1;
+        const currentPage = data.currentPage || 1;
+        
+        // Обновляем подиум (топ-3)
+        if (users.length > 0) {
+            document.getElementById('podiumName1').textContent = this.web3.formatAddress(users[0].address);
+            document.getElementById('podiumValue1').textContent = this.utils.formatNumber(users[0].total_taxes, 2) + ' USDT';
+        }
+        if (users.length > 1) {
+            document.getElementById('podiumName2').textContent = this.web3.formatAddress(users[1].address);
+            document.getElementById('podiumValue2').textContent = this.utils.formatNumber(users[1].total_taxes, 2) + ' USDT';
+        }
+        if (users.length > 2) {
+            document.getElementById('podiumName3').textContent = this.web3.formatAddress(users[2].address);
+            document.getElementById('podiumValue3').textContent = this.utils.formatNumber(users[2].total_taxes, 2) + ' USDT';
+        }
+        
+        // Обновляем таблицу
+        const tbody = document.getElementById('rankingBody');
+        const t = CONFIG.TRANSLATIONS[this.currentLanguage];
+        
+        tbody.innerHTML = users.map((user, index) => {
+            const place = (currentPage - 1) * 100 + index + 1;
+            return `
+                <tr>
+                    <td>#${place}</td>
+                    <td>${this.web3.formatAddress(user.address)}</td>
+                    <td>${this.utils.formatNumber(user.total_taxes, 2)} USDT</td>
+                    <td>${user.referral_count}</td>
+                    <td>${this.utils.formatNumber(user.total_income, 2)} USDT</td>
+                    <td>CryptoLand</td>
+                </tr>
+            `;
+        }).join('');
+        
+        // Добавляем пагинацию
+        this.renderPagination(totalPages, currentPage);
+        
+        // Получаем позицию текущего пользователя
+        if (this.web3 && this.web3.account) {
+            this.loadUserRank();
+        }
+    }
+    
+    renderPagination(totalPages, currentPage) {
+        const container = document.querySelector('.transactions-pagination');
+        if (!container) return;
+        
+        let html = '';
+        const maxVisible = 5;
+        let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+        let end = Math.min(totalPages, start + maxVisible - 1);
+        
+        if (end - start + 1 < maxVisible) {
+            start = Math.max(1, end - maxVisible + 1);
+        }
+        
+        // Кнопка "Назад"
+        html += `<button class="pagination-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="app.changeRankingPage(${currentPage - 1})">‹</button>`;
+        
+        // Первая страница
+        if (start > 1) {
+            html += `<button class="pagination-btn" onclick="app.changeRankingPage(1)">1</button>`;
+            if (start > 2) html += `<span class="pagination-dots">...</span>`;
+        }
+        
+        // Страницы
+        for (let i = start; i <= end; i++) {
+            html += `<button class="pagination-btn ${i === currentPage ? 'active' : ''}" onclick="app.changeRankingPage(${i})">${i}</button>`;
+        }
+        
+        // Последняя страница
+        if (end < totalPages) {
+            if (end < totalPages - 1) html += `<span class="pagination-dots">...</span>`;
+            html += `<button class="pagination-btn" onclick="app.changeRankingPage(${totalPages})">${totalPages}</button>`;
+        }
+        
+        // Кнопка "Вперед"
+        html += `<button class="pagination-btn" ${currentPage === totalPages ? 'disabled' : ''} onclick="app.changeRankingPage(${currentPage + 1})">›</button>`;
+        
+        container.innerHTML = html;
+    }
+    
+    async changeRankingPage(page) {
+        this.rankingPage = page;
+        await this.loadRankings();
+    }
+    
+    async loadUserRank() {
+        try {
+            const serverUrl = CONFIG.SERVER_URL || 'http://localhost:3000';
+            const response = await fetch(`${serverUrl}/api/rank/${this.web3.account}?type=${this.rankingType}`);
+            const data = await response.json();
+            
+            document.getElementById('userRank').textContent = `#${data.rank}`;
+            
+            // Прогресс до следующего места
+            if (data.nextRankDiff) {
+                document.getElementById('nextRankDiff').textContent = this.utils.formatNumber(data.nextRankDiff, 2) + ' USDT';
+            }
+            
+            // Статистика пользователя
+            if (data.userStats) {
+                document.getElementById('userTaxes').textContent = this.utils.formatNumber(data.userStats.total_taxes, 2) + ' USDT';
+                document.getElementById('userPopulation').textContent = data.userStats.referral_count;
+                document.getElementById('userTotal').textContent = this.utils.formatNumber(data.userStats.total_income, 2) + ' USDT';
+            }
+            
+        } catch (error) {
+            console.error('Error loading user rank:', error);
+        }
+    }
+    
+    showEmptyRankings() {
+        document.getElementById('podiumName1').textContent = '—';
+        document.getElementById('podiumValue1').textContent = '—';
+        document.getElementById('podiumName2').textContent = '—';
+        document.getElementById('podiumValue2').textContent = '—';
+        document.getElementById('podiumName3').textContent = '—';
+        document.getElementById('podiumValue3').textContent = '—';
+        
+        document.getElementById('userRank').textContent = '—';
+        document.getElementById('userTaxes').textContent = '—';
+        document.getElementById('userPopulation').textContent = '—';
+        document.getElementById('userTotal').textContent = '—';
+        document.getElementById('nextRankDiff').textContent = '—';
+        
+        const tbody = document.getElementById('rankingBody');
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                    Рейтинг временно недоступен
+                </td>
+            </tr>
+        `;
     }
 
     async updateUserInfo() {
@@ -710,8 +1059,16 @@ class CryptoLandApp {
             const conditionsBtn = document.getElementById('scrollToConditions');
             if (conditionsBtn) conditionsBtn.classList.add('active');
         }
+        
         if (tabName === 'districts') this.loadDeposits();
-        if (tabName === 'rankings') this.loadRankings('tax');
+        
+        if (tabName === 'rankings') {
+            this.loadRankings();
+        }
+        
+        if (tabName === 'treasury' && this.web3 && this.web3.isConnected) {
+            this.loadTransactionHistory();
+        }
     }
 
     showWalletModal() {
@@ -891,6 +1248,7 @@ class CryptoLandApp {
             );
             
             await this.updateUserInfo();
+            await this.loadTransactionHistory();
             
         } catch (error) {
             console.error('Withdraw error:', error);
@@ -925,6 +1283,7 @@ class CryptoLandApp {
             
             await this.updateUserInfo();
             await this.renderLevels();
+            await this.loadTransactionHistory();
             
         } catch (error) {
             console.error('Referral withdraw error:', error);
@@ -960,6 +1319,7 @@ class CryptoLandApp {
             await this.updateUserInfo();
             await this.loadDeposits();
             await this.renderLevels();
+            await this.loadTransactionHistory();
             
         } catch (error) {
             console.error('Check deposits error:', error);
@@ -1103,6 +1463,7 @@ class CryptoLandApp {
             await this.updateUserInfo();
             await this.loadDeposits();
             await this.renderLevels();
+            await this.loadTransactionHistory();
             
         } catch (error) {
             console.error('Withdraw error:', error);
@@ -1133,33 +1494,6 @@ class CryptoLandApp {
         });
     }
 
-    async loadRankings(type) {
-        document.getElementById('podiumName1').textContent = 'CryptoKing';
-        document.getElementById('podiumValue1').textContent = '15,780 USDT';
-        document.getElementById('podiumName2').textContent = 'BlockchainMaster';
-        document.getElementById('podiumValue2').textContent = '12,450 USDT';
-        document.getElementById('podiumName3').textContent = 'TokenWhale';
-        document.getElementById('podiumValue3').textContent = '9,230 USDT';
-        
-        document.getElementById('userRank').textContent = '#42';
-        document.getElementById('userTaxes').textContent = '1,250 USDT';
-        document.getElementById('userPopulation').textContent = '127';
-        document.getElementById('userTotal').textContent = '3,450 USDT';
-        document.getElementById('nextRankDiff').textContent = '780 USDT';
-    }
-
-    filterRankings(search) {
-        console.log('Searching:', search);
-    }
-
-    filterTransactionsByDate(dateFilter) {
-        console.log('Date filter:', dateFilter);
-    }
-
-    filterTransactionsByType(typeFilter) {
-        console.log('Type filter:', typeFilter);
-    }
-
     showModal(modalId) {
         const overlay = document.getElementById('modalOverlay');
         const modal = document.getElementById(modalId);
@@ -1187,6 +1521,9 @@ class CryptoLandApp {
         if (overlay) overlay.style.display = 'none';
     }
 }
+
+// Делаем функцию доступной глобально для пагинации
+window.app = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new CryptoLandApp();
