@@ -538,7 +538,6 @@ class CryptoLandApp {
 
     // Функция checkConnection() ПОЛНОСТЬЮ УДАЛЕНА
 
-    // ============ ИСПРАВЛЕННАЯ ФУНКЦИЯ CONNECTWALLET ============
     async connectWallet() {
         try {
             this.hideModal('walletModal');
@@ -552,6 +551,7 @@ class CryptoLandApp {
             
             await this.updateUserInfo();
             await this.loadDeposits();
+            await this.renderLevels(); // Обновляем таблицу уровней с бонусами
             
             // Обновляем кнопку на "ПОДКЛЮЧЕН"
             this.updateConnectButton(true);
@@ -573,12 +573,14 @@ class CryptoLandApp {
         }
     }
 
+    // ============ ИСПРАВЛЕННАЯ ФУНКЦИЯ UPDATEUSERINFO ============
     async updateUserInfo() {
         if (!this.web3 || !this.web3.isConnected) return;
         
         try {
             const usdtBalance = await this.web3.getUSDTBalance();
             const stats = await this.web3.getUserStats();
+            const mayorBonusStats = await this.web3.getMayorBonusStats();
             
             // Обновление шапки
             document.getElementById('headerWalletBalance').textContent = this.utils.formatNumber(usdtBalance, 2);
@@ -606,7 +608,25 @@ class CryptoLandApp {
             document.getElementById('totalReferrals').textContent = '0'; // TODO: добавить в контракт
             document.getElementById('totalTaxes').textContent = this.utils.formatNumber(stats.availableReferral, 2) + ' USDT';
             document.getElementById('totalTurnover').textContent = this.utils.formatNumber(stats.totalDeposits, 2) + ' USDT';
-            document.getElementById('mayorBonus').textContent = parseFloat(stats.availableReferral) > 0 ? 'Активен' : 'Неактивен';
+            
+            // ===== ИСПРАВЛЕННЫЙ БОНУС МЭРА =====
+            const mayorBonusElement = document.getElementById('mayorBonus');
+            
+            if (mayorBonusStats.anyLevelActive) {
+                // Подсчитываем, на скольких уровнях активен бонус
+                const activeLevels = mayorBonusStats.levelBonuses.filter(bonus => bonus).length;
+                mayorBonusElement.textContent = `Активен (${activeLevels} ур.)`;
+                mayorBonusElement.classList.add('bonus-active');
+                mayorBonusElement.classList.remove('bonus-inactive');
+                
+                console.log("Бонус мэра активен на уровнях:", 
+                    mayorBonusStats.levelBonuses.map((active, idx) => active ? idx + 1 : null).filter(v => v));
+            } else {
+                mayorBonusElement.textContent = 'Неактивен';
+                mayorBonusElement.classList.add('bonus-inactive');
+                mayorBonusElement.classList.remove('bonus-active');
+            }
+            // ====================================
             
             // Активация кнопок вывода
             document.getElementById('withdrawIncomeBtn').disabled = parseFloat(stats.availableInterest) <= 0;
@@ -669,7 +689,8 @@ class CryptoLandApp {
         });
     }
 
-    renderLevels() {
+    // ============ ИСПРАВЛЕННАЯ ФУНКЦИЯ RENDERLEVELS ============
+    async renderLevels() {
         const container = document.getElementById('levelsBody');
         if (!container) return;
         
@@ -678,17 +699,51 @@ class CryptoLandApp {
         const turnovers = [0, 500, 1000, 2000, 3000, 5000, 7000, 10000, 15000, 20000, 30000, 40000, 50000, 75000, 100000];
         const deposits = [10, 50, 50, 100, 100, 250, 250, 500, 500, 750, 750, 1250, 1250, 2000, 2500];
         
-        container.innerHTML = percentages.map((percent, index) => `
-            <tr>
-                <td><span class="level-badge">${index + 1}</span></td>
-                <td><span class="profit-percent">${percent}%</span></td>
-                <td>${this.utils.formatNumber(turnovers[index])} USDT</td>
-                <td>${t.personal_deposit === 'Личный депозит' ? 'от' : 'from'} ${deposits[index]} USDT</td>
-                <td>0</td>
-                <td>0 USDT</td>
-                <td><span class="bonus-inactive">${t.bonus_inactive}</span></td>
-            </tr>
-        `).join('');
+        // Получаем статистику бонуса мэра, если подключен кошелек
+        let levelBonuses = new Array(15).fill(false);
+        let levelDeposits = new Array(15).fill('0');
+        
+        if (this.web3 && this.web3.isConnected) {
+            try {
+                const mayorStats = await this.web3.getMayorBonusStats();
+                levelBonuses = mayorStats.levelBonuses;
+                levelDeposits = mayorStats.levelDeposits;
+            } catch (error) {
+                console.error('Error loading mayor bonus stats:', error);
+            }
+        }
+        
+        container.innerHTML = percentages.map((percent, index) => {
+            const level = index + 1;
+            const hasBonus = levelBonuses[index];
+            const userTurnover = parseFloat(levelDeposits[index] || '0');
+            const requiredTurnover = turnovers[index];
+            
+            // Определяем статус для отображения
+            let statusText = t.bonus_inactive;
+            let statusClass = 'bonus-inactive';
+            
+            if (hasBonus) {
+                statusText = '✅ ' + (t.bonus_active || 'Активен (+1%)');
+                statusClass = 'bonus-active';
+            } else if (userTurnover > 0) {
+                const needMore = (requiredTurnover - userTurnover).toFixed(2);
+                statusText = `⏳ нужно ${needMore} USDT`;
+                statusClass = 'bonus-pending';
+            }
+            
+            return `
+                <tr>
+                    <td><span class="level-badge">${level}</span></td>
+                    <td><span class="profit-percent">${percent}%</span></td>
+                    <td>${this.utils.formatNumber(turnovers[index])} USDT</td>
+                    <td>${t.personal_deposit === 'Личный депозит' ? 'от' : 'from'} ${deposits[index]} USDT</td>
+                    <td>0</td>
+                    <td>${this.utils.formatNumber(userTurnover)} USDT</td>
+                    <td><span class="${statusClass}">${statusText}</span></td>
+                </tr>
+            `;
+        }).join('');
     }
 
     showTab(tabName) {
@@ -710,6 +765,7 @@ class CryptoLandApp {
         
         if (tabName === 'tax') {
             this.updateReferralLink();
+            this.renderLevels(); // Обновляем таблицу уровней при переходе на страницу налоговой
             
             document.querySelectorAll('.levels-nav-btn').forEach(btn => {
                 btn.classList.remove('active');
@@ -831,6 +887,7 @@ class CryptoLandApp {
             this.hideModal('investModal');
             await this.updateUserInfo();
             await this.loadDeposits();
+            await this.renderLevels(); // Обновляем таблицу уровней после инвестиции
             
         } catch (error) {
             console.error('Investment error:', error);
@@ -931,6 +988,7 @@ class CryptoLandApp {
             );
             
             await this.updateUserInfo();
+            await this.renderLevels(); // Обновляем таблицу уровней после вывода
             
         } catch (error) {
             console.error('Referral withdraw error:', error);
@@ -965,6 +1023,7 @@ class CryptoLandApp {
             
             await this.updateUserInfo();
             await this.loadDeposits();
+            await this.renderLevels(); // Обновляем таблицу уровней после проверки
             
         } catch (error) {
             console.error('Check deposits error:', error);
@@ -1108,6 +1167,7 @@ class CryptoLandApp {
             
             await this.updateUserInfo();
             await this.loadDeposits();
+            await this.renderLevels(); // Обновляем таблицу уровней после вывода
             
         } catch (error) {
             console.error('Withdraw error:', error);
