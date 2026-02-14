@@ -311,6 +311,58 @@ class CryptoLandWeb3 {
                 "outputs": [],
                 "stateMutability": "nonpayable",
                 "type": "function"
+            },
+            // События (для фильтрации)
+            {
+                "anonymous": false,
+                "inputs": [
+                    {"indexed": true, "name": "user", "type": "address"},
+                    {"indexed": false, "name": "amount", "type": "uint256"},
+                    {"indexed": false, "name": "tariffId", "type": "uint256"},
+                    {"indexed": true, "name": "referrer", "type": "address"}
+                ],
+                "name": "NewDeposit",
+                "type": "event"
+            },
+            {
+                "anonymous": false,
+                "inputs": [
+                    {"indexed": true, "name": "user", "type": "address"},
+                    {"indexed": false, "name": "amount", "type": "uint256"},
+                    {"indexed": false, "name": "fee", "type": "uint256"}
+                ],
+                "name": "InterestWithdrawn",
+                "type": "event"
+            },
+            {
+                "anonymous": false,
+                "inputs": [
+                    {"indexed": true, "name": "user", "type": "address"},
+                    {"indexed": true, "name": "referral", "type": "address"},
+                    {"indexed": false, "name": "amount", "type": "uint256"},
+                    {"indexed": false, "name": "level", "type": "uint256"}
+                ],
+                "name": "ReferralReward",
+                "type": "event"
+            },
+            {
+                "anonymous": false,
+                "inputs": [
+                    {"indexed": true, "name": "user", "type": "address"},
+                    {"indexed": false, "name": "depositId", "type": "uint256"},
+                    {"indexed": false, "name": "returnedAmount", "type": "uint256"}
+                ],
+                "name": "DepositFinished",
+                "type": "event"
+            },
+            {
+                "anonymous": false,
+                "inputs": [
+                    {"indexed": true, "name": "user", "type": "address"},
+                    {"indexed": false, "name": "amount", "type": "uint256"}
+                ],
+                "name": "WithdrawReferral",
+                "type": "event"
             }
         ];
         
@@ -381,34 +433,105 @@ class CryptoLandWeb3 {
         this.usdtContract = new this.web3.eth.Contract(usdtABI, usdtAddress);
     }
 
-    setupMetaMaskEvents() {
-        window.ethereum.on('accountsChanged', (accounts) => {
-            if (accounts.length === 0) {
-                this.isConnected = false;
-                this.account = null;
-                if (window.app) {
-                    window.app.updateConnectButton(false);
-                }
-            } else {
-                this.account = accounts[0];
-                if (window.app) {
-                    window.app.updateUserInfo();
-                }
-            }
-        });
+    // ============ НОВЫЕ ФУНКЦИИ ДЛЯ ИСТОРИИ ============
+    
+    async getTransactionHistory(userAddress, fromBlock = 0, toBlock = 'latest') {
+        if (!this.contract) return [];
         
-        window.ethereum.on('chainChanged', () => {
-            window.location.reload();
-        });
-        
-        window.ethereum.on('disconnect', (error) => {
-            console.log('Wallet disconnected:', error);
-            this.isConnected = false;
-            this.account = null;
-            if (window.app) {
-                window.app.updateConnectButton(false);
-            }
-        });
+        try {
+            // Получаем все события для пользователя
+            const [depositEvents, withdrawEvents, referralEvents, finishEvents] = await Promise.all([
+                this.contract.getPastEvents('NewDeposit', {
+                    filter: { user: userAddress },
+                    fromBlock,
+                    toBlock
+                }),
+                this.contract.getPastEvents('InterestWithdrawn', {
+                    filter: { user: userAddress },
+                    fromBlock,
+                    toBlock
+                }),
+                this.contract.getPastEvents('ReferralReward', {
+                    filter: { user: userAddress },
+                    fromBlock,
+                    toBlock
+                }),
+                this.contract.getPastEvents('DepositFinished', {
+                    filter: { user: userAddress },
+                    fromBlock,
+                    toBlock
+                }),
+                this.contract.getPastEvents('WithdrawReferral', {
+                    filter: { user: userAddress },
+                    fromBlock,
+                    toBlock
+                })
+            ]);
+            
+            // Преобразуем события в единый формат
+            const transactions = [];
+            
+            depositEvents.forEach(event => {
+                transactions.push({
+                    type: 'invest',
+                    amount: this.web3.utils.fromWei(event.returnValues.amount, 'ether'),
+                    timestamp: event.blockNumber, // Будет заменено на реальное время
+                    blockNumber: event.blockNumber,
+                    transactionHash: event.transactionHash,
+                    tariffId: event.returnValues.tariffId,
+                    level: null
+                });
+            });
+            
+            withdrawEvents.forEach(event => {
+                transactions.push({
+                    type: 'withdraw',
+                    amount: this.web3.utils.fromWei(event.returnValues.amount, 'ether'),
+                    timestamp: event.blockNumber,
+                    blockNumber: event.blockNumber,
+                    transactionHash: event.transactionHash,
+                    level: null
+                });
+            });
+            
+            referralEvents.forEach(event => {
+                transactions.push({
+                    type: 'referral',
+                    amount: this.web3.utils.fromWei(event.returnValues.amount, 'ether'),
+                    timestamp: event.blockNumber,
+                    blockNumber: event.blockNumber,
+                    transactionHash: event.transactionHash,
+                    level: parseInt(event.returnValues.level)
+                });
+            });
+            
+            finishEvents.forEach(event => {
+                transactions.push({
+                    type: 'return',
+                    amount: this.web3.utils.fromWei(event.returnValues.returnedAmount, 'ether'),
+                    timestamp: event.blockNumber,
+                    blockNumber: event.blockNumber,
+                    transactionHash: event.transactionHash,
+                    level: null
+                });
+            });
+            
+            return transactions;
+            
+        } catch (error) {
+            console.error('Error getting transaction history:', error);
+            return [];
+        }
+    }
+    
+    async getBlockTimestamp(blockNumber) {
+        try {
+            const block = await this.web3.eth.getBlock(blockNumber);
+            return block.timestamp;
+        } catch (error) {
+            console.error('Error getting block timestamp:', error);
+            return Math.floor(Date.now() / 1000);
+        }
     }
 
     // ============ ОСНОВНЫЕ ФУНКЦИИ ============
