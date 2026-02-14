@@ -7,7 +7,7 @@ class CryptoLandWeb3 {
         this.isConnected = false;
         this.usdtContract = null;
         this.provider = null;
-        this.walletType = null; // 'metamask' или 'walletconnect'
+        this.walletType = null;
     }
 
     async init(walletType = 'metamask') {
@@ -38,7 +38,6 @@ class CryptoLandWeb3 {
 
     async initWalletConnect() {
         try {
-            // Проверяем, загружена ли библиотека WalletConnect
             if (typeof window.WalletConnectProvider === 'undefined') {
                 throw new Error("Библиотека WalletConnect не загружена");
             }
@@ -46,17 +45,15 @@ class CryptoLandWeb3 {
             const WalletConnectProvider = window.WalletConnectProvider.default;
             const provider = new WalletConnectProvider({
                 rpc: {
-                    97: "https://data-seed-prebsc-1-s1.binance.org:8545/", // BSC Testnet
-                    56: "https://bsc-dataseed.binance.org/" // BSC Mainnet
+                    97: "https://data-seed-prebsc-1-s1.binance.org:8545/",
+                    56: "https://bsc-dataseed.binance.org/"
                 },
                 chainId: CONFIG.CURRENT_NETWORK,
-                qrcode: true // Показываем QR-код
+                qrcode: true
             });
             
-            // Сохраняем провайдер
             this.provider = provider;
             
-            // Показываем уведомление о QR-коде
             if (window.app) {
                 window.app.utils.showNotification(
                     window.app.currentLanguage === 'ru' ? 
@@ -66,30 +63,23 @@ class CryptoLandWeb3 {
                 );
             }
             
-            // Включаем провайдер (открывается QR-код)
             await provider.enable();
             
             this.web3 = new Web3(provider);
             
-            // Получаем аккаунт
             const accounts = await this.web3.eth.getAccounts();
             if (accounts.length === 0) {
                 throw new Error("No accounts found");
             }
             this.account = accounts[0];
             
-            // Получаем networkId
             this.networkId = await this.web3.eth.net.getId();
             
-            // Проверяем сеть
             await this.checkNetwork();
-            
-            // Инициализируем контракты
             await this.initContracts();
             
             this.isConnected = true;
             
-            // Настраиваем обработчики событий
             this.setupWalletConnectEvents(provider);
             
             return this.account;
@@ -101,7 +91,6 @@ class CryptoLandWeb3 {
     }
 
     setupWalletConnectEvents(provider) {
-        // Обработка отключения
         provider.on('disconnect', (code, reason) => {
             console.log('WalletConnect disconnected:', reason);
             this.isConnected = false;
@@ -115,7 +104,6 @@ class CryptoLandWeb3 {
             }
         });
         
-        // Обработка смены аккаунта
         provider.on('accountsChanged', (accounts) => {
             if (accounts.length === 0) {
                 this.isConnected = false;
@@ -131,7 +119,6 @@ class CryptoLandWeb3 {
             }
         });
         
-        // Обработка смены сети
         provider.on('chainChanged', (chainId) => {
             window.location.reload();
         });
@@ -171,7 +158,6 @@ class CryptoLandWeb3 {
                         params: [{ chainId: CONFIG.NETWORKS[currentNetwork].chainId }]
                     });
                 } else {
-                    // Для WalletConnect показываем предупреждение
                     throw new Error(`Please switch to ${CONFIG.NETWORKS[currentNetwork].name} in your wallet`);
                 }
             } catch (switchError) {
@@ -200,7 +186,6 @@ class CryptoLandWeb3 {
     }
 
     async initContracts() {
-        // ABI для контракта CryptoLand (минимальный набор для работы)
         const contractABI = [
             // View functions
             {
@@ -237,6 +222,7 @@ class CryptoLandWeb3 {
                             {"name": "amount", "type": "uint256"},
                             {"name": "startTime", "type": "uint256"},
                             {"name": "lastWithdrawTime", "type": "uint256"},
+                            {"name": "lastProcessTime", "type": "uint256"},
                             {"name": "active", "type": "bool"}
                         ],
                         "name": "",
@@ -285,7 +271,21 @@ class CryptoLandWeb3 {
                 "type": "function"
             },
             {
-                "inputs": [{"name": "depositId", "type": "uint256"}],
+                "inputs": [{"name": "user", "type": "address"}],
+                "name": "processUserInterest",
+                "outputs": [{"name": "", "type": "uint256"}],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [{"name": "users", "type": "address[]"}],
+                "name": "processMultipleUsers",
+                "outputs": [{"name": "", "type": "uint256"}],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [],
                 "name": "withdrawInterest",
                 "outputs": [],
                 "stateMutability": "nonpayable",
@@ -319,7 +319,6 @@ class CryptoLandWeb3 {
             CONFIG.CONTRACT_ADDRESS
         );
         
-        // ABI для USDT
         const usdtABI = [
             {
                 "constant": true,
@@ -417,7 +416,6 @@ class CryptoLandWeb3 {
     async invest(amount, tariffId, referrer) {
         const weiAmount = this.web3.utils.toWei(amount.toString(), 'ether');
         
-        // Проверка allowance
         const allowance = await this.usdtContract.methods
             .allowance(this.account, CONFIG.CONTRACT_ADDRESS)
             .call();
@@ -426,14 +424,12 @@ class CryptoLandWeb3 {
         const amountBN = this.web3.utils.toBN(weiAmount);
         
         if (allowanceBN.lt(amountBN)) {
-            // Аппрув на большую сумму для удобства
             const approveAmount = this.web3.utils.toWei('1000000', 'ether');
             await this.usdtContract.methods
                 .approve(CONFIG.CONTRACT_ADDRESS, approveAmount)
                 .send({ from: this.account });
         }
         
-        // Инвестирование
         return await this.contract.methods.invest(weiAmount, tariffId, referrer || '0x0000000000000000000000000000000000000000')
             .send({
                 from: this.account,
@@ -441,11 +437,27 @@ class CryptoLandWeb3 {
             });
     }
 
-    async withdrawInterest(depositId) {
-        return await this.contract.methods.withdrawInterest(depositId)
+    async processUserInterest(user) {
+        return await this.contract.methods.processUserInterest(user)
             .send({
                 from: this.account,
-                gas: 200000
+                gas: 500000
+            });
+    }
+
+    async processMultipleUsers(users) {
+        return await this.contract.methods.processMultipleUsers(users)
+            .send({
+                from: this.account,
+                gas: 5000000
+            });
+    }
+
+    async withdrawInterest() {
+        return await this.contract.methods.withdrawInterest()
+            .send({
+                from: this.account,
+                gas: 300000
             });
     }
 
@@ -461,7 +473,7 @@ class CryptoLandWeb3 {
         return await this.contract.methods.withdrawPendingInterest()
             .send({
                 from: this.account,
-                gas: 200000
+                gas: 300000
             });
     }
 
@@ -523,6 +535,7 @@ class CryptoLandWeb3 {
                 amount: this.web3.utils.fromWei(dep.amount, 'ether'),
                 startTime: parseInt(dep.startTime),
                 lastWithdrawTime: parseInt(dep.lastWithdrawTime),
+                lastProcessTime: parseInt(dep.lastProcessTime),
                 active: dep.active
             }));
         } catch (error) {
