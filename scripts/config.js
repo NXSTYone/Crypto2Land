@@ -249,11 +249,18 @@ const CONFIG = {
             trust_desc: "Официальный кошелек Binance",
             walletconnect_desc: "Подключение по QR-коду",
             telegram_note: "Если вы в Telegram MiniApp: используйте WalletConnect или откройте приложение в браузере",
+            
+            // ===== НОВЫЕ ПЕРЕВОДЫ ДЛЯ РЕФЕРАЛЬНОЙ МОДАЛКИ =====
             referrer_confirm_title: "Подтверждение реферала",
             referrer_confirm_text: "Вы перешли по реферальной ссылке от пользователя:",
             referrer_confirm_note: "Если вы подтвердите, при первой инвестиции этот пользователь станет вашим реферером. Реферер будет получать процент от ваших доходов.",
             referrer_decline: "Нет, не хочу",
             referrer_accept: "Да, подтвердить",
+            
+            // ===== НОВЫЕ ПЕРЕВОДЫ ДЛЯ УВЕДОМЛЕНИЙ =====
+            referrer_already_exists: "У вас уже есть реферер! Вы не можете сменить его.",
+            referrer_confirmed_success: "Реферер подтвержден! Он будет применен при первой инвестиции.",
+            referrer_declined: "Вы отказались от этой реферальной ссылки.",
             
             // Фразы мэра
             mayor_title: "Устав CryptoLand",
@@ -437,11 +444,18 @@ const CONFIG = {
             trust_desc: "Official Binance wallet",
             walletconnect_desc: "QR code connection",
             telegram_note: "If you are in Telegram MiniApp: use WalletConnect or open the app in browser",
-            referrer_confirm_title: "Referrer сonfirmation",
+            
+            // ===== NEW TRANSLATIONS FOR REFERRAL MODAL =====
+            referrer_confirm_title: "Referrer confirmation",
             referrer_confirm_text: "You came through a referral link from:",
             referrer_confirm_note: "If you confirm, this user will become your referrer on first investment. The referrer will receive a percentage of your earnings.",
             referrer_decline: "No, decline",
             referrer_accept: "Yes, confirm",
+            
+            // ===== NEW TRANSLATIONS FOR NOTIFICATIONS =====
+            referrer_already_exists: "You already have a referrer! You cannot change it.",
+            referrer_confirmed_success: "Referrer confirmed! It will be applied on first investment.",
+            referrer_declined: "You declined this referral link.",
             
             // Mayor phrases
             mayor_title: "Charter of CryptoLand",
@@ -488,7 +502,3 @@ CONFIG.getContractABI = async function() {
 };
 
 window.CONFIG = CONFIG;
-
-
-
-
