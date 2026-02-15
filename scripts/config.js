@@ -255,13 +255,13 @@ const CONFIG = {
             // ===== НОВЫЕ ПЕРЕВОДЫ ДЛЯ РЕФЕРАЛЬНОЙ МОДАЛКИ =====
             referrer_confirm_title: "Подтверждение реферала",
             referrer_confirm_text: "Вы перешли по реферальной ссылке от пользователя:",
-            referrer_confirm_note: "Если вы подтвердите, при первой инвестиции этот пользователь станет вашим реферером. Реферер будет получать процент от ваших доходов.",
+            referrer_confirm_note: "Если вы подтвердите, при первой инвестиции этот пользователь станет вашим пригласителем. Пригласитель будет получать процент от ваших доходов.",
             referrer_decline: "Нет, не хочу",
             referrer_accept: "Да, подтвердить",
             
             // ===== НОВЫЕ ПЕРЕВОДЫ ДЛЯ УВЕДОМЛЕНИЙ =====
-            referrer_already_exists: "У вас уже есть реферер! Вы не можете сменить его.",
-            referrer_confirmed_success: "Реферер подтвержден! Он будет применен при первой инвестиции.",
+            referrer_already_exists: "У вас уже есть пригласитель! Вы не можете сменить его.",
+            referrer_confirmed_success: "Пригласитель подтвержден! Он будет применен при первой инвестиции.",
             referrer_declined: "Вы отказались от этой реферальной ссылки.",
             
             // Фразы мэра
@@ -292,10 +292,10 @@ const CONFIG = {
             stat_treasury: "Total Treasury",
             stat_taxes: "Tax Collection",
             stat_income: "District Income",
-            stat_trend: "total residents",
-            stat_available: "available for withdrawal",
-            stat_daily: "accrued daily",
-            per_day: "per day",
+            stat_trend: "total residents of your city",
+            stat_available: "referral accruals for all time",
+            stat_daily: "interest rates for all time",
+            per_day: "the sum of balances available for withdrawal",
             
             // Tariffs
             tariffs_title: "Available Districts for Investment",
@@ -507,6 +507,7 @@ CONFIG.getContractABI = async function() {
 };
 
 window.CONFIG = CONFIG;
+
 
 
 
