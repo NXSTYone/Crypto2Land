@@ -211,71 +211,66 @@ class CryptoLandApp {
     }
 
     updateTaxPageStats(stats) {
-        // Защита: если элементы не найдены, выходим
-        const totalReferralsEl = document.getElementById('totalReferrals');
-        const totalTaxesEl = document.getElementById('totalTaxes');
-        const totalTurnoverEl = document.getElementById('totalTurnover');
-        const mayorBonusElement = document.getElementById('mayorBonus');
-        
-        // ⚠️ ИСПРАВЛЕНО: добавил пропущенные операторы ||
-        if (!totalReferralsEl || !totalTaxesEl || !totalTurnoverEl || !mayorBonusElement) {
-            console.warn('Tax page elements not ready yet');
-            return; // Просто выходим, прелоадер не ломается
-        }
-        
-        // Всего жителей
-        totalReferralsEl.textContent = (this.totalReferralsCount || 0).toString();
-        
-        // Налоговые сборы - доступно к выводу
-        const availableReferral = parseFloat(stats?.availableReferral || '0');
-        totalTaxesEl.textContent = this.utils.formatNumber(availableReferral, 2) + ' USDT';
-        
-        // Общий оборот
-        const totalEarned = parseFloat(this.totalReferralEarned || '0');
-        totalTurnoverEl.textContent = this.utils.formatNumber(totalEarned, 2) + ' USDT';
-        
-        // Бонус мэра - САМАЯ БЕЗОПАСНАЯ ВЕРСИЯ
-        const anyLevelActive = this.levelBonuses?.some(bonus => bonus === true) || false;
-        
-        // Определяем язык безопасно
-        let currentLang = 'en';
-        try {
-            currentLang = this.currentLanguage || 
-                         (CONFIG?.LANGUAGE?.default) || 
-                         localStorage.getItem('cryptoland_language') || 
-                         'en';
-        } catch (e) {
-            console.warn('Language detection error:', e);
-        }
-        
-        if (anyLevelActive) {
-            const activeLevels = this.levelBonuses?.filter(bonus => bonus).length || 0;
-            const levelText = currentLang === 'ru' ? 'ур.' : 'lvl';
-            
-            // Пытаемся получить перевод, но если нет - используем запасной вариант
-            let activeText = 'Active (+1%)';
-            try {
-                if (CONFIG?.TRANSLATIONS?.[currentLang]?.bonus_active) {
-                    activeText = CONFIG.TRANSLATIONS[currentLang].bonus_active;
-                }
-            } catch (e) {}
-            
-            mayorBonusElement.textContent = `${activeText} (${activeLevels} ${levelText})`;
-            mayorBonusElement.classList.add('bonus-active');
-            mayorBonusElement.classList.remove('bonus-inactive', 'bonus-pending');
-        } else {
-            let inactiveText = 'Inactive';
-            try {
-                if (CONFIG?.TRANSLATIONS?.[currentLang]?.bonus_inactive) {
-                    inactiveText = CONFIG.TRANSLATIONS[currentLang].bonus_inactive;
-                }
-            } catch (e) {}
-            
-            mayorBonusElement.textContent = inactiveText;
-            mayorBonusElement.classList.add('bonus-inactive');
-            mayorBonusElement.classList.remove('bonus-active', 'bonus-pending');
-        }
+    // Защита: проверяем существование элементов
+    const totalReferralsEl = document.getElementById('totalReferrals');
+    const totalTaxesEl = document.getElementById('totalTaxes');
+    const totalTurnoverEl = document.getElementById('totalTurnover');
+    const mayorBonusElement = document.getElementById('mayorBonus');
+    
+    if (!totalReferralsEl  !totalTaxesEl  !totalTurnoverEl || !mayorBonusElement) {
+        return; // Безопасно выходим, если элементы не готовы
     }
+    
+    // Всего жителей
+    totalReferralsEl.textContent = (this.totalReferralsCount || 0).toString();
+    
+    // Налоговые сборы - доступно к выводу
+    const availableReferral = parseFloat(stats?.availableReferral || '0');
+    totalTaxesEl.textContent = this.utils.formatNumber(availableReferral, 2) + ' USDT';
+    
+    // Общий оборот
+    const totalEarned = parseFloat(this.totalReferralEarned || '0');
+    totalTurnoverEl.textContent = this.utils.formatNumber(totalEarned, 2) + ' USDT';
+    
+    // Бонус мэра - с поддержкой двух языков из config.js
+    const anyLevelActive = this.levelBonuses?.some(bonus => bonus === true) || false;
+    
+    // Получаем текущий язык
+    const currentLang = this.currentLanguage || 'ru';
+    
+    // Получаем переводы из config.js с запасными вариантами
+    let bonusActiveText = 'Активен (+1%)';
+    let bonusInactiveText = 'Неактивен';
+    let levelAbbr = 'ур.';
+    
+    try {
+        if (CONFIG?.TRANSLATIONS && CONFIG.TRANSLATIONS[currentLang]) {
+            const t = CONFIG.TRANSLATIONS[currentLang];
+            
+            // Используем переводы, если они есть
+            if (t.bonus_active) bonusActiveText = t.bonus_active;
+            if (t.bonus_inactive) bonusInactiveText = t.bonus_inactive;
+            
+            // Для английского языка меняем сокращение
+            if (currentLang === 'en') {
+                levelAbbr = 'lvl';
+            }
+        }
+    } catch (e) {
+        console.warn('Error loading translations:', e);
+    }
+    
+    if (anyLevelActive) {
+        const activeLevels = this.levelBonuses?.filter(bonus => bonus).length || 0;
+        mayorBonusElement.textContent = ${bonusActiveText} (${activeLevels} ${levelAbbr});
+        mayorBonusElement.classList.add('bonus-active');
+        mayorBonusElement.classList.remove('bonus-inactive', 'bonus-pending');
+    } else {
+        mayorBonusElement.textContent = bonusInactiveText;
+        mayorBonusElement.classList.add('bonus-inactive');
+        mayorBonusElement.classList.remove('bonus-active', 'bonus-pending');
+    }
+}
     
     // ===== ФУНКЦИИ ДЛЯ РЕФЕРАЛЬНОЙ ССЫЛКИ =====
     
@@ -1825,6 +1820,7 @@ window.app = null;
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new CryptoLandApp();
 });
+
 
 
 
