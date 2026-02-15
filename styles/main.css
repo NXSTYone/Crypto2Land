@@ -5093,3 +5093,94 @@ margin-bottom: 20px;
     color: var(--accent-gold);
 }
 
+/* ===== СТИЛИ ДЛЯ КАРТОЧКИ ПРИГЛАСИТЕЛЯ ===== */
+.referrer-info-card {
+    background: linear-gradient(145deg, rgba(42, 125, 225, 0.1), rgba(0, 0, 0, 0.2));
+    border-radius: 20px;
+    padding: 20px;
+    border: 1px solid var(--border-blue);
+    margin-bottom: 25px;
+    backdrop-filter: blur(10px);
+    border-left: 4px solid var(--accent-blue);
+}
+
+.referrer-info-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
+.referrer-info-header i {
+    font-size: 24px;
+    color: var(--accent-blue);
+}
+
+.referrer-info-header h4 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+}
+
+.referrer-info-body {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.referrer-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--gradient-blue);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    color: #fff;
+    border: 2px solid var(--accent-blue);
+    box-shadow: var(--glow-blue);
+}
+
+.referrer-details {
+    flex: 1;
+}
+
+.referrer-address {
+    font-size: 18px;
+    font-weight: 700;
+    font-family: monospace;
+    color: #fff;
+    margin-bottom: 8px;
+    word-break: break-all;
+}
+
+.referrer-stats {
+    display: flex;
+    gap: 20px;
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+.referrer-stat {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.referrer-stat i {
+    color: var(--accent-blue);
+}
+
+/* Для мобильной версии */
+@media (max-width: 768px) {
+    .referrer-info-body {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .referrer-stats {
+        justify-content: center;
+    }
+}
