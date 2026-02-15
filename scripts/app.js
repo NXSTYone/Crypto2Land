@@ -226,23 +226,37 @@ class CryptoLandApp {
     const mayorBonusElement = document.getElementById('mayorBonus');
     const anyLevelActive = this.levelBonuses.some(bonus => bonus === true);
     
-    // Получаем переводы из config.js
-    const t = CONFIG.TRANSLATIONS[this.currentLanguage];
+    // ОПРЕДЕЛЯЕМ ЯЗЫК ПРЯМО ИЗ КНОПКИ В ШАПКЕ
+    const langBtn = document.querySelector('.lang-btn.active');
+    const currentLang = langBtn ? langBtn.dataset.lang : 'ru';
+    
+    // Получаем переводы из config.js для этого языка
+    let bonusActiveText = 'Активен (+1%)';
+    let bonusInactiveText = 'Неактивен';
+    
+    try {
+        if (CONFIG?.TRANSLATIONS && CONFIG.TRANSLATIONS[currentLang]) {
+            const t = CONFIG.TRANSLATIONS[currentLang];
+            if (t.bonus_active) bonusActiveText = t.bonus_active;
+            if (t.bonus_inactive) bonusInactiveText = t.bonus_inactive;
+        }
+    } catch (e) {
+        console.warn('Error getting translations:', e);
+    }
     
     if (anyLevelActive) {
         const activeLevels = this.levelBonuses.filter(bonus => bonus).length;
-        const levelText = this.currentLanguage === 'ru' ? 'ур.' : 'lvl';
-        // Используем перевод из config.js
-        mayorBonusElement.textContent = `${t.bonus_active} (${activeLevels} ${levelText})`;
+        const levelText = currentLang === 'ru' ? 'ур.' : 'lvl';
+        mayorBonusElement.textContent = `${bonusActiveText} (${activeLevels} ${levelText})`;
         mayorBonusElement.classList.add('bonus-active');
         mayorBonusElement.classList.remove('bonus-inactive', 'bonus-pending');
     } else {
-        // Используем перевод из config.js
-        mayorBonusElement.textContent = t.bonus_inactive;
+        mayorBonusElement.textContent = bonusInactiveText;
         mayorBonusElement.classList.add('bonus-inactive');
         mayorBonusElement.classList.remove('bonus-active', 'bonus-pending');
     }
 }
+
     
     // ===== ФУНКЦИИ ДЛЯ РЕФЕРАЛЬНОЙ ССЫЛКИ =====
     
@@ -1792,4 +1806,5 @@ window.app = null;
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new CryptoLandApp();
 });
+
 
