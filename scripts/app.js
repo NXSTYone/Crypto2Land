@@ -226,7 +226,7 @@ class CryptoLandApp {
     
     if (anyLevelActive) {
         const activeLevels = this.levelBonuses.filter(bonus => bonus).length;
-        mayorBonusElement.textContent = Активен (${activeLevels} ур.);
+        mayorBonusElement.textContent = `Активен (${activeLevels} ур.)`;
         mayorBonusElement.classList.add('bonus-active');
         mayorBonusElement.classList.remove('bonus-inactive', 'bonus-pending');
     } else {
@@ -1784,4 +1784,5 @@ window.app = null;
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new CryptoLandApp();
 });
+
 
