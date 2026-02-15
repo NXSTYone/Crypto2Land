@@ -14,9 +14,17 @@ class CryptoLandApp {
         this.rankingType = 'tax';
         this.rankingPage = 1;
         this.rankingSearch = '';
-        this.pendingReferrer = null; // Добавлено для хранения временного реферера из URL
+        this.pendingReferrer = null;
         
-        // Фразы мэра из конфига
+        // Статистика
+        this.totalReferralsCount = 0;
+        this.totalReferralEarned = '0';
+        this.totalInterestEarned = '0';
+        this.levelDeposits = new Array(15).fill('0');
+        this.levelBonuses = new Array(15).fill(false);
+        this.levelCounts = new Array(15).fill(0); // НОВОЕ - количество рефералов по уровням
+        
+        // Фразы мэра
         this.mayorPhrases = CONFIG.MAYOR_PHRASES;
         
         this.init();
@@ -40,21 +48,18 @@ class CryptoLandApp {
         this.initEvents();
         this.initLanguage();
         
-        // ===== НОВЫЙ КОД: ОБРАБОТКА РЕФЕРАЛЬНОЙ ССЫЛКИ =====
+        // Обработка реферальной ссылки
         const urlParams = new URLSearchParams(window.location.search);
         const referrer = urlParams.get('ref');
         
-        // Проверяем, есть ли параметр ref и валидный ли это адрес
         if (referrer && this.utils.isValidAddress(referrer)) {
-            // Сохраняем реферера временно и показываем модалку через 1.5 секунды
             this.pendingReferrer = referrer;
             setTimeout(() => {
                 this.showReferrerConfirmation(referrer);
             }, 1500);
         }
-        // ===== КОНЕЦ НОВОГО КОДА =====
         
-        // Загрузка тарифов из контракта
+        // Загрузка тарифов
         await this.loadTariffsFromContract();
         
         // Проверка на Telegram Mini App
@@ -71,17 +76,173 @@ class CryptoLandApp {
         }
     }
 
-    // ===== НОВЫЕ ФУНКЦИИ ДЛЯ РЕФЕРАЛЬНОЙ ССЫЛКИ =====
+    // ===== ЗАГРУЗКА ВСЕЙ СТАТИСТИКИ =====
     
-    /**
-     * Проверяет, есть ли уже реферер у пользователя
-     */
+    async loadReferralStats() {
+        if (!this.web3 || !this.web3.isConnected || !this.web3.account) {
+            this.totalReferralsCount = 0;
+            this.totalReferralEarned = '0';
+            return;
+        }
+        
+        try {
+            const [totalCount, totalEarned] = await Promise.all([
+                this.web3.getTotalReferralsCount(this.web3.account),
+                this.web3.getTotalReferralEarned(this.web3.account)
+            ]);
+            
+            this.totalReferralsCount = totalCount;
+            this.totalReferralEarned = totalEarned;
+            
+            console.log('✅ Статистика рефералов загружена:', {
+                totalCount,
+                totalEarned
+            });
+            
+        } catch (error) {
+            console.error('Error loading referral stats:', error);
+        }
+    }
+    
+    async loadInterestStats() {
+        if (!this.web3 || !this.web3.isConnected || !this.web3.account) {
+            this.totalInterestEarned = '0';
+            return;
+        }
+        
+        try {
+            this.totalInterestEarned = await this.web3.getTotalInterestEarned(this.web3.account);
+            console.log('✅ Статистика процентов загружена:', this.totalInterestEarned);
+        } catch (error) {
+            console.error('Error loading interest stats:', error);
+        }
+    }
+    
+    async loadLevelStats() {
+        if (!this.web3 || !this.web3.isConnected || !this.web3.account) {
+            this.levelDeposits = new Array(15).fill('0');
+            this.levelBonuses = new Array(15).fill(false);
+            this.levelCounts = new Array(15).fill(0);
+            return;
+        }
+        
+        try {
+            const mayorStats = await this.web3.getMayorBonusStats();
+            this.levelDeposits = mayorStats.levelDeposits;
+            this.levelBonuses = mayorStats.levelBonuses;
+            this.levelCounts = mayorStats.levelCounts; // НОВОЕ - реальные данные из контракта
+            console.log('✅ Статистика уровней загружена:', this.levelCounts);
+        } catch (error) {
+            console.error('Error loading level stats:', error);
+        }
+    }
+    
+    async refreshAllStats() {
+        if (!this.web3 || !this.web3.isConnected || !this.web3.account) {
+            this.totalReferralsCount = 0;
+            this.totalReferralEarned = '0';
+            this.totalInterestEarned = '0';
+            this.levelDeposits = new Array(15).fill('0');
+            this.levelBonuses = new Array(15).fill(false);
+            this.levelCounts = new Array(15).fill(0);
+            
+            this.updateDashboardStats({
+                totalDeposits: '0',
+                activeDeposits: '0',
+                availableInterest: '0',
+                availableReferral: '0',
+                totalEarned: '0'
+            });
+            return;
+        }
+        
+        try {
+            await Promise.all([
+                this.loadReferralStats(),
+                this.loadInterestStats(),
+                this.loadLevelStats()
+            ]);
+            
+            const stats = await this.web3.getUserStats();
+            
+            this.updateDashboardStats(stats);
+            this.updateTaxPageStats(stats);
+            this.renderLevels(); // Таблица с реальными данными
+            
+        } catch (error) {
+            console.error('Error refreshing all stats:', error);
+        }
+    }
+
+    // ===== ОБНОВЛЕНИЕ UI =====
+
+    updateDashboardStats(stats) {
+        // Население - общее количество рефералов
+        document.getElementById('statPopulation').textContent = this.totalReferralsCount.toString();
+        
+        // Общая казна - доступные проценты + реферальные
+        const totalAvailable = parseFloat(stats.availableInterest) + parseFloat(stats.availableReferral);
+        document.getElementById('statTotal').textContent = this.utils.formatNumber(totalAvailable, 2) + ' USDT';
+        
+        // Налоговые сборы - всего получено реферальных за все время
+        document.getElementById('statTaxes').textContent = this.utils.formatNumber(this.totalReferralEarned, 2) + ' USDT';
+        
+        // Доход с района - всего получено процентов за все время
+        document.getElementById('statIncome').textContent = this.utils.formatNumber(this.totalInterestEarned, 2) + ' USDT';
+        
+        // Обновляем остальные элементы
+        document.getElementById('treasuryIncome').textContent = this.utils.formatNumber(stats.availableInterest, 2) + ' USDT';
+        document.getElementById('treasuryTax').textContent = this.utils.formatNumber(stats.availableReferral, 2) + ' USDT';
+        document.getElementById('treasuryDeposit').textContent = this.utils.formatNumber(stats.activeDeposits, 2) + ' USDT';
+        
+        document.getElementById('summaryTotal').textContent = this.utils.formatNumber(stats.totalDeposits, 2) + ' USDT';
+        document.getElementById('summaryActive').textContent = this.utils.formatNumber(stats.activeDeposits, 2) + ' USDT';
+        document.getElementById('summaryAccumulated').textContent = this.utils.formatNumber(stats.totalEarned, 2) + ' USDT';
+        document.getElementById('summaryAvailable').textContent = this.utils.formatNumber(
+            parseFloat(stats.availableInterest) + parseFloat(stats.availableReferral), 2
+        ) + ' USDT';
+        
+        document.getElementById('withdrawIncomeBtn').disabled = parseFloat(stats.availableInterest) <= 0;
+        document.getElementById('withdrawTaxBtn').disabled = parseFloat(stats.availableReferral) <= 0;
+        
+        // Обновляем бейдж в навигации
+        const activeDepositsCount = this.userDeposits.filter(d => d.active).length;
+        document.getElementById('navDepositCount').textContent = activeDepositsCount;
+    }
+
+    updateTaxPageStats(stats) {
+        // Всего жителей - общее количество рефералов
+        document.getElementById('totalReferrals').textContent = this.totalReferralsCount.toString();
+        
+        // Налоговые сборы - доступно к выводу
+        document.getElementById('totalTaxes').textContent = this.utils.formatNumber(stats.availableReferral, 2) + ' USDT';
+        
+        // Общий оборот - всего получено реферальных за все время
+        document.getElementById('totalTurnover').textContent = this.utils.formatNumber(this.totalReferralEarned, 2) + ' USDT';
+        
+        // Бонус мэра
+        const mayorBonusElement = document.getElementById('mayorBonus');
+        const anyLevelActive = this.levelBonuses.some(bonus => bonus === true);
+        
+        if (anyLevelActive) {
+            const activeLevels = this.levelBonuses.filter(bonus => bonus).length;
+            mayorBonusElement.textContent = `Активен (${activeLevels} ур.)`;
+            mayorBonusElement.classList.add('bonus-active');
+            mayorBonusElement.classList.remove('bonus-inactive', 'bonus-pending');
+        } else {
+            mayorBonusElement.textContent = 'Неактивен';
+            mayorBonusElement.classList.add('bonus-inactive');
+            mayorBonusElement.classList.remove('bonus-active', 'bonus-pending');
+        }
+    }
+
+    // ===== ФУНКЦИИ ДЛЯ РЕФЕРАЛЬНОЙ ССЫЛКИ =====
+    
     async checkIfHasReferrer() {
         if (!this.web3 || !this.web3.isConnected || !this.web3.account) return false;
         
         try {
-            // Вызываем контракт чтобы узнать, есть ли уже реферер
-            const referrer = await this.web3.contract.methods.referrerOf(this.web3.account).call();
+            const referrer = await this.web3.getReferrer();
             return referrer !== '0x0000000000000000000000000000000000000000';
         } catch (error) {
             console.error('Error checking referrer:', error);
@@ -89,17 +250,12 @@ class CryptoLandApp {
         }
     }
     
-    /**
-     * Показывает модалку с вопросом о реферале
-     */
     showReferrerConfirmation(referrerAddress) {
         const t = CONFIG.TRANSLATIONS[this.currentLanguage];
         const shortAddress = this.web3.formatAddress(referrerAddress);
         
-        // Проверяем, существует ли уже модалка
         let modal = document.getElementById('referrerConfirmModal');
         if (!modal) {
-            // Создаем модалку, если её нет
             modal = document.createElement('div');
             modal.id = 'referrerConfirmModal';
             modal.className = 'modal';
@@ -141,46 +297,35 @@ class CryptoLandApp {
             `;
             document.body.appendChild(modal);
             
-            // Добавляем обработчики событий для кнопок
             document.getElementById('acceptReferrerBtn').addEventListener('click', () => this.acceptReferrer());
             document.getElementById('declineReferrerBtn').addEventListener('click', () => this.declineReferrer());
             document.getElementById('closeReferrerModalBtn').addEventListener('click', () => this.hideReferrerModal());
         }
         
-        // Обновляем адрес реферера в модалке
         const addressDisplay = document.getElementById('referrerAddressDisplay');
         if (addressDisplay) {
             addressDisplay.textContent = shortAddress;
         }
         
-        // Показываем модалку
         document.getElementById('modalOverlay').style.display = 'block';
         modal.style.display = 'block';
     }
     
-    /**
-     * Скрыть модалку подтверждения
-     */
     hideReferrerModal() {
         const modal = document.getElementById('referrerConfirmModal');
         if (modal) modal.style.display = 'none';
         document.getElementById('modalOverlay').style.display = 'none';
     }
     
-    /**
-     * Пользователь подтвердил реферера
-     */
     async acceptReferrer() {
         if (!this.pendingReferrer) {
             this.hideReferrerModal();
             return;
         }
         
-        // Проверяем, есть ли уже реферер (была ли уже инвестиция)
         const hasReferrer = await this.checkIfHasReferrer();
         
         if (hasReferrer) {
-            // Если уже есть реферер, показываем предупреждение
             this.utils.showNotification(
                 this.currentLanguage === 'ru' ? 
                 'У вас уже есть реферер! Вы не можете сменить его.' : 
@@ -192,7 +337,6 @@ class CryptoLandApp {
             return;
         }
         
-        // Если нет реферера, сохраняем нового (заменяет старого, если был)
         localStorage.setItem('confirmedReferrer', this.pendingReferrer);
         
         this.utils.showNotification(
@@ -207,11 +351,7 @@ class CryptoLandApp {
         this.hideReferrerModal();
     }
     
-    /**
-     * Пользователь отказался от реферера
-     */
     declineReferrer() {
-        // Просто игнорируем эту ссылку
         this.utils.showNotification(
             this.currentLanguage === 'ru' ? 
             'Вы отказались от этой реферальной ссылки.' : 
@@ -222,51 +362,6 @@ class CryptoLandApp {
         this.pendingReferrer = null;
         this.hideReferrerModal();
     }
-    
-    // ===== КОНЕЦ НОВЫХ ФУНКЦИЙ =====
-
-    // ===== НОВАЯ ФУНКЦИЯ: ЗАГРУЗКА ИНФОРМАЦИИ О ПРИГЛАСИТЕЛЕ =====
-    /**
-     * Загружает информацию о пригласителе пользователя
-     */
-    async loadReferrerInfo() {
-        const referrerCard = document.getElementById('referrerInfoCard');
-        if (!referrerCard) return;
-        
-        if (!this.web3 || !this.web3.isConnected || !this.web3.account) {
-            referrerCard.style.display = 'none';
-            return;
-        }
-        
-        try {
-            // Получаем адрес реферера из контракта
-            const referrer = await this.web3.contract.methods.referrerOf(this.web3.account).call();
-            
-            // Если реферера нет (нулевой адрес)
-            if (referrer === '0x0000000000000000000000000000000000000000') {
-                referrerCard.style.display = 'none';
-                return;
-            }
-            
-            // Показываем карточку
-            referrerCard.style.display = 'block';
-            
-            // Форматируем адрес
-            const shortAddress = this.web3.formatAddress(referrer);
-            document.getElementById('referrerAddress').textContent = shortAddress;
-            
-            // Получаем время первой инвестиции (если есть в контракте)
-            // В вашем контракте нет такой функции, показываем просто адрес
-            document.getElementById('referrerSince').textContent = '—';
-            
-            // TODO: если добавите в контракт функцию getFirstDepositTime, можно показывать дату
-            
-        } catch (error) {
-            console.error('Error loading referrer info:', error);
-            referrerCard.style.display = 'none';
-        }
-    }
-    // ===== КОНЕЦ НОВОЙ ФУНКЦИИ =====
 
     isTelegramMiniApp() {
         return window.Telegram && Telegram.WebApp && Telegram.WebApp.initData !== '';
@@ -600,13 +695,6 @@ class CryptoLandApp {
             });
         }
 
-        const withdrawReferralBtn = document.getElementById('withdrawReferralBtn');
-        if (withdrawReferralBtn) {
-            withdrawReferralBtn.addEventListener('click', async () => {
-                await this.withdrawReferral();
-            });
-        }
-
         const checkDeposits = document.getElementById('checkDepositsBtn');
         if (checkDeposits) {
             checkDeposits.addEventListener('click', async () => {
@@ -645,7 +733,7 @@ class CryptoLandApp {
             });
         }
 
-        // ===== НОВЫЕ ОБРАБОТЧИКИ ДЛЯ РЕЙТИНГА =====
+        // Обработчики для рейтинга
         document.querySelectorAll('.ranking-type-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 document.querySelectorAll('.ranking-type-btn').forEach(b => 
@@ -675,7 +763,7 @@ class CryptoLandApp {
             });
         }
 
-        // ===== ОБРАБОТЧИКИ ДЛЯ ИСТОРИИ =====
+        // Обработчики для истории
         const dateFilter = document.getElementById('transactionDateFilter');
         if (dateFilter) {
             dateFilter.addEventListener('change', () => this.filterTransactions());
@@ -734,11 +822,10 @@ class CryptoLandApp {
             
             await this.web3.init(this.selectedWallet);
             
-            await this.updateUserInfo();
+            await this.refreshAllStats();
             await this.loadDeposits();
-            await this.renderLevels();
             await this.loadTransactionHistory();
-            await this.loadReferrerInfo(); // ← ДОБАВЛЕНО: загружаем информацию о пригласителе
+            await this.loadReferrerInfo();
             
             this.updateConnectButton(true);
             
@@ -758,10 +845,8 @@ class CryptoLandApp {
         }
     }
 
-    // ===== ИСПРАВЛЕННАЯ ФУНКЦИЯ ЗАГРУЗКИ ИСТОРИИ (БЕЗ ДЕМО-ДАННЫХ) =====
     async loadTransactionHistory() {
         if (!this.web3 || !this.web3.isConnected || !this.web3.account) {
-            // Просто показываем пустую таблицу
             this.transactions = [];
             this.filteredTransactions = [];
             this.renderTransactions();
@@ -769,13 +854,11 @@ class CryptoLandApp {
         }
         
         try {
-            // Получаем текущий блок для ограничения глубины поиска
             const currentBlock = await this.web3.web3.eth.getBlockNumber();
             const fromBlock = Math.max(0, currentBlock - 50000);
             
             const events = await this.web3.getTransactionHistory(this.web3.account, fromBlock);
             
-            // Получаем реальные временные метки для каждого блока
             const transactionsWithTime = [];
             for (const tx of events) {
                 const timestamp = await this.web3.getBlockTimestamp(tx.blockNumber);
@@ -785,7 +868,6 @@ class CryptoLandApp {
                 });
             }
             
-            // Сортируем по времени (новые сверху)
             this.transactions = transactionsWithTime.sort((a, b) => b.timestamp - a.timestamp);
             this.filteredTransactions = [...this.transactions];
             
@@ -794,7 +876,6 @@ class CryptoLandApp {
             
         } catch (error) {
             console.error('Error loading transaction history:', error);
-            // При ошибке показываем пустую таблицу
             this.transactions = [];
             this.filteredTransactions = [];
             this.renderTransactions();
@@ -812,7 +893,6 @@ class CryptoLandApp {
         const monthAgo = today - 30 * 86400;
         
         this.filteredTransactions = this.transactions.filter(tx => {
-            // Фильтр по дате
             if (dateFilter !== 'all') {
                 switch(dateFilter) {
                     case 'today':
@@ -827,10 +907,8 @@ class CryptoLandApp {
                 }
             }
             
-            // Фильтр по типу
             if (typeFilter !== 'all' && tx.type !== typeFilter) return false;
             
-            // Поиск по хэшу
             if (searchValue) {
                 const hash = tx.transactionHash?.toLowerCase() || '';
                 if (!hash.includes(searchValue)) return false;
@@ -922,18 +1000,15 @@ class CryptoLandApp {
         }).join('');
     }
 
-    // ===== НОВАЯ ФУНКЦИЯ ЗАГРУЗКИ РЕЙТИНГА =====
     async loadRankings() {
         const serverUrl = CONFIG.SERVER_URL || 'http://localhost:3000';
         const limit = 100;
         
         try {
-            // Определяем поле для сортировки
             let orderBy = 'total_taxes DESC';
             if (this.rankingType === 'population') orderBy = 'referral_count DESC';
             if (this.rankingType === 'total') orderBy = 'total_income DESC';
             
-            // Добавляем поиск
             let url = `${serverUrl}/api/ranking?page=${this.rankingPage}&limit=${limit}&orderBy=${orderBy}`;
             if (this.rankingSearch) {
                 url += `&search=${encodeURIComponent(this.rankingSearch)}`;
@@ -956,7 +1031,6 @@ class CryptoLandApp {
         const totalPages = data.totalPages || 1;
         const currentPage = data.currentPage || 1;
         
-        // Обновляем подиум (топ-3)
         if (users.length > 0) {
             document.getElementById('podiumName1').textContent = this.web3.formatAddress(users[0].address);
             document.getElementById('podiumValue1').textContent = this.utils.formatNumber(users[0].total_taxes, 2) + ' USDT';
@@ -970,7 +1044,6 @@ class CryptoLandApp {
             document.getElementById('podiumValue3').textContent = this.utils.formatNumber(users[2].total_taxes, 2) + ' USDT';
         }
         
-        // Обновляем таблицу
         const tbody = document.getElementById('rankingBody');
         const t = CONFIG.TRANSLATIONS[this.currentLanguage];
         
@@ -988,10 +1061,8 @@ class CryptoLandApp {
             `;
         }).join('');
         
-        // Добавляем пагинацию
         this.renderPagination(totalPages, currentPage);
         
-        // Получаем позицию текущего пользователя
         if (this.web3 && this.web3.account) {
             this.loadUserRank();
         }
@@ -1010,27 +1081,22 @@ class CryptoLandApp {
             start = Math.max(1, end - maxVisible + 1);
         }
         
-        // Кнопка "Назад"
         html += `<button class="pagination-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="app.changeRankingPage(${currentPage - 1})">‹</button>`;
         
-        // Первая страница
         if (start > 1) {
             html += `<button class="pagination-btn" onclick="app.changeRankingPage(1)">1</button>`;
             if (start > 2) html += `<span class="pagination-dots">...</span>`;
         }
         
-        // Страницы
         for (let i = start; i <= end; i++) {
             html += `<button class="pagination-btn ${i === currentPage ? 'active' : ''}" onclick="app.changeRankingPage(${i})">${i}</button>`;
         }
         
-        // Последняя страница
         if (end < totalPages) {
             if (end < totalPages - 1) html += `<span class="pagination-dots">...</span>`;
             html += `<button class="pagination-btn" onclick="app.changeRankingPage(${totalPages})">${totalPages}</button>`;
         }
         
-        // Кнопка "Вперед"
         html += `<button class="pagination-btn" ${currentPage === totalPages ? 'disabled' : ''} onclick="app.changeRankingPage(${currentPage + 1})">›</button>`;
         
         container.innerHTML = html;
@@ -1049,12 +1115,10 @@ class CryptoLandApp {
             
             document.getElementById('userRank').textContent = `#${data.rank}`;
             
-            // Прогресс до следующего места
             if (data.nextRankDiff) {
                 document.getElementById('nextRankDiff').textContent = this.utils.formatNumber(data.nextRankDiff, 2) + ' USDT';
             }
             
-            // Статистика пользователя
             if (data.userStats) {
                 document.getElementById('userTaxes').textContent = this.utils.formatNumber(data.userStats.total_taxes, 2) + ' USDT';
                 document.getElementById('userPopulation').textContent = data.userStats.referral_count;
@@ -1091,54 +1155,7 @@ class CryptoLandApp {
     }
 
     async updateUserInfo() {
-        if (!this.web3 || !this.web3.isConnected) return;
-        
-        try {
-            const usdtBalance = await this.web3.getUSDTBalance();
-            const stats = await this.web3.getUserStats();
-            const mayorBonusStats = await this.web3.getMayorBonusStats();
-            
-            document.getElementById('headerWalletBalance').textContent = this.utils.formatNumber(usdtBalance, 2);
-            
-            document.getElementById('statPopulation').textContent = stats.totalDeposits > 0 ? 'Активно' : '0';
-            document.getElementById('statTotal').textContent = this.utils.formatNumber(stats.totalDeposits, 2) + ' USDT';
-            document.getElementById('statTaxes').textContent = this.utils.formatNumber(stats.availableReferral, 2) + ' USDT';
-            document.getElementById('statIncome').textContent = this.utils.formatNumber(stats.availableInterest, 2) + ' USDT';
-            
-            document.getElementById('treasuryIncome').textContent = this.utils.formatNumber(stats.availableInterest, 2) + ' USDT';
-            document.getElementById('treasuryTax').textContent = this.utils.formatNumber(stats.availableReferral, 2) + ' USDT';
-            document.getElementById('treasuryDeposit').textContent = this.utils.formatNumber(stats.activeDeposits, 2) + ' USDT';
-            
-            document.getElementById('summaryTotal').textContent = this.utils.formatNumber(stats.totalDeposits, 2) + ' USDT';
-            document.getElementById('summaryActive').textContent = this.utils.formatNumber(stats.activeDeposits, 2) + ' USDT';
-            document.getElementById('summaryAccumulated').textContent = this.utils.formatNumber(stats.totalEarned, 2) + ' USDT';
-            document.getElementById('summaryAvailable').textContent = this.utils.formatNumber(
-                parseFloat(stats.availableInterest) + parseFloat(stats.availableReferral), 2
-            ) + ' USDT';
-            
-            document.getElementById('totalReferrals').textContent = '0';
-            document.getElementById('totalTaxes').textContent = this.utils.formatNumber(stats.availableReferral, 2) + ' USDT';
-            document.getElementById('totalTurnover').textContent = this.utils.formatNumber(stats.totalDeposits, 2) + ' USDT';
-            
-            const mayorBonusElement = document.getElementById('mayorBonus');
-            
-            if (mayorBonusStats.anyLevelActive) {
-                const activeLevels = mayorBonusStats.levelBonuses.filter(bonus => bonus).length;
-                mayorBonusElement.textContent = `Активен (${activeLevels} ур.)`;
-                mayorBonusElement.classList.add('bonus-active');
-                mayorBonusElement.classList.remove('bonus-inactive');
-            } else {
-                mayorBonusElement.textContent = 'Неактивен';
-                mayorBonusElement.classList.add('bonus-inactive');
-                mayorBonusElement.classList.remove('bonus-active');
-            }
-            
-            document.getElementById('withdrawIncomeBtn').disabled = parseFloat(stats.availableInterest) <= 0;
-            document.getElementById('withdrawTaxBtn').disabled = parseFloat(stats.availableReferral) <= 0;
-            
-        } catch (error) {
-            console.error('Update error:', error);
-        }
+        await this.refreshAllStats();
     }
 
     renderTariffs() {
@@ -1200,24 +1217,12 @@ class CryptoLandApp {
         const turnovers = [0, 500, 1000, 2000, 3000, 5000, 7000, 10000, 15000, 20000, 30000, 40000, 50000, 75000, 100000];
         const deposits = [10, 50, 50, 100, 100, 250, 250, 500, 500, 750, 750, 1250, 1250, 2000, 2500];
         
-        let levelBonuses = new Array(15).fill(false);
-        let levelDeposits = new Array(15).fill('0');
-        
-        if (this.web3 && this.web3.isConnected) {
-            try {
-                const mayorStats = await this.web3.getMayorBonusStats();
-                levelBonuses = mayorStats.levelBonuses;
-                levelDeposits = mayorStats.levelDeposits;
-            } catch (error) {
-                console.error('Error loading mayor bonus stats:', error);
-            }
-        }
-        
         container.innerHTML = percentages.map((percent, index) => {
             const level = index + 1;
-            const hasBonus = levelBonuses[index];
-            const userTurnover = parseFloat(levelDeposits[index] || '0');
+            const hasBonus = this.levelBonuses[index];
+            const userTurnover = parseFloat(this.levelDeposits[index] || '0');
             const requiredTurnover = turnovers[index];
+            const referralCount = this.levelCounts[index] || 0; // РЕАЛЬНЫЕ ДАННЫЕ ИЗ КОНТРАКТА
             
             let statusText = t.bonus_inactive;
             let statusClass = 'bonus-inactive';
@@ -1225,6 +1230,9 @@ class CryptoLandApp {
             if (hasBonus) {
                 statusText = '✅ ' + (t.bonus_active || 'Активен (+1%)');
                 statusClass = 'bonus-active';
+            } else if (userTurnover >= requiredTurnover && requiredTurnover > 0) {
+                statusText = '⚠️ условия выполнены';
+                statusClass = 'bonus-pending';
             } else if (userTurnover > 0) {
                 const needMore = (requiredTurnover - userTurnover).toFixed(2);
                 statusText = `⏳ нужно ${needMore} USDT`;
@@ -1237,7 +1245,7 @@ class CryptoLandApp {
                     <td><span class="profit-percent">${percent}%</span></td>
                     <td>${this.utils.formatNumber(turnovers[index])} USDT</td>
                     <td>${t.personal_deposit === 'Личный депозит' ? 'от' : 'from'} ${deposits[index]} USDT</td>
-                    <td>0</td>
+                    <td><strong style="color: var(--accent-gold);">${referralCount}</strong></td>
                     <td>${this.utils.formatNumber(userTurnover)} USDT</td>
                     <td><span class="${statusClass}">${statusText}</span></td>
                 </tr>
@@ -1265,7 +1273,7 @@ class CryptoLandApp {
         if (tabName === 'tax') {
             this.updateReferralLink();
             this.renderLevels();
-            this.loadReferrerInfo(); // ← ДОБАВЛЕНО: загружаем информацию о пригласителе при переходе на страницу
+            this.loadReferrerInfo();
             
             document.querySelectorAll('.levels-nav-btn').forEach(btn => {
                 btn.classList.remove('active');
@@ -1353,7 +1361,6 @@ class CryptoLandApp {
         document.getElementById('summaryEndDate').textContent = endDate.toLocaleDateString(this.currentLanguage === 'ru' ? 'ru-RU' : 'en-US');
     }
 
-    // ===== ИСПРАВЛЕННАЯ ФУНКЦИЯ PROCESSINVESTMENT С ПОДДЕРЖКОЙ ПОДТВЕРЖДЕННОГО РЕФЕРЕРА =====
     async processInvestment() {
         if (!this.web3 || !this.web3.isConnected) {
             this.utils.showNotification(
@@ -1373,28 +1380,21 @@ class CryptoLandApp {
             return;
         }
         
-        // ===== ОБНОВЛЕННЫЙ КОД: ОПРЕДЕЛЕНИЕ РЕФЕРЕРА =====
         const referrerInput = document.getElementById('referrerAddress')?.value || '';
         const confirmedReferrer = localStorage.getItem('confirmedReferrer');
         
         let referrerAddress = '0x0000000000000000000000000000000000000000';
         
-        // Приоритет: поле ввода > подтвержденный реферер > пустой адрес
         if (referrerInput && this.utils.isValidAddress(referrerInput)) {
             referrerAddress = referrerInput;
             console.log('📝 Используем реферера из поля ввода:', referrerAddress);
-            
-            // Если пользователь ввел адрес вручную, очищаем сохраненный
             localStorage.removeItem('confirmedReferrer');
             
         } else if (confirmedReferrer && this.utils.isValidAddress(confirmedReferrer)) {
             referrerAddress = confirmedReferrer;
             console.log('🔗 Используем подтвержденного реферера из ссылки:', referrerAddress);
-            
-            // Очищаем после использования (однократное применение)
             localStorage.removeItem('confirmedReferrer');
         }
-        // ===== КОНЕЦ ОБНОВЛЕННОГО КОДА =====
         
         try {
             this.utils.showNotification(
@@ -1410,9 +1410,9 @@ class CryptoLandApp {
             );
             
             this.hideModal('investModal');
-            await this.updateUserInfo();
+            
+            await this.refreshAllStats();
             await this.loadDeposits();
-            await this.renderLevels();
             
         } catch (error) {
             console.error('Investment error:', error);
@@ -1478,7 +1478,7 @@ class CryptoLandApp {
                 'success'
             );
             
-            await this.updateUserInfo();
+            await this.refreshAllStats();
             await this.loadTransactionHistory();
             
         } catch (error) {
@@ -1512,8 +1512,7 @@ class CryptoLandApp {
                 'success'
             );
             
-            await this.updateUserInfo();
-            await this.renderLevels();
+            await this.refreshAllStats();
             await this.loadTransactionHistory();
             
         } catch (error) {
@@ -1547,9 +1546,8 @@ class CryptoLandApp {
                 'success'
             );
             
-            await this.updateUserInfo();
+            await this.refreshAllStats();
             await this.loadDeposits();
-            await this.renderLevels();
             await this.loadTransactionHistory();
             
         } catch (error) {
@@ -1691,9 +1689,8 @@ class CryptoLandApp {
                 'success'
             );
             
-            await this.updateUserInfo();
+            await this.refreshAllStats();
             await this.loadDeposits();
-            await this.renderLevels();
             await this.loadTransactionHistory();
             
         } catch (error) {
@@ -1725,6 +1722,35 @@ class CryptoLandApp {
         });
     }
 
+    async loadReferrerInfo() {
+        const referrerCard = document.getElementById('referrerInfoCard');
+        if (!referrerCard) return;
+        
+        if (!this.web3 || !this.web3.isConnected || !this.web3.account) {
+            referrerCard.style.display = 'none';
+            return;
+        }
+        
+        try {
+            const referrer = await this.web3.getReferrer();
+            
+            if (referrer === '0x0000000000000000000000000000000000000000') {
+                referrerCard.style.display = 'none';
+                return;
+            }
+            
+            referrerCard.style.display = 'block';
+            
+            const shortAddress = this.web3.formatAddress(referrer);
+            document.getElementById('referrerAddress').textContent = shortAddress;
+            document.getElementById('referrerSince').textContent = '—';
+            
+        } catch (error) {
+            console.error('Error loading referrer info:', error);
+            referrerCard.style.display = 'none';
+        }
+    }
+
     showModal(modalId) {
         const overlay = document.getElementById('modalOverlay');
         const modal = document.getElementById(modalId);
@@ -1753,7 +1779,6 @@ class CryptoLandApp {
     }
 }
 
-// Делаем функцию доступной глобально для пагинации
 window.app = null;
 
 document.addEventListener('DOMContentLoaded', () => {
