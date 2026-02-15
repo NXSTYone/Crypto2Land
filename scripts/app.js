@@ -237,7 +237,7 @@ class CryptoLandApp {
         mayorBonusElement.classList.remove('bonus-active', 'bonus-pending');
     }
 }
-
+    
     // ===== ФУНКЦИИ ДЛЯ РЕФЕРАЛЬНОЙ ССЫЛКИ =====
     
     async checkIfHasReferrer() {
@@ -1786,4 +1786,5 @@ window.app = null;
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new CryptoLandApp();
 });
+
 
