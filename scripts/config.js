@@ -1,5 +1,5 @@
 const CONFIG = {
-    CONTRACT_ADDRESS: "0xAF64a8773d010e30FAe5B05a40de3d07803F9Cd6",
+    CONTRACT_ADDRESS: "0x3BD2EB47AAbb24C02921CC13aBBB6bcC31036B02",
     
     NETWORKS: {
         56: {
@@ -22,7 +22,7 @@ const CONFIG = {
     
     USDT_ADDRESS: {
         56: "0x55d398326f99059fF775485246999027B3197955",
-        97: "0x7ef95a0FEE0Dd31b22626fA2e10Ee6A223F8a684"
+        97: "0x337610d27c682E347C9cD60BD4b3b107C9d34dDd"
     },
     
     // ===== НОВЫЙ ПАРАМЕТР: URL СЕРВЕРА =====
@@ -507,4 +507,5 @@ CONFIG.getContractABI = async function() {
 };
 
 window.CONFIG = CONFIG;
+
 
