@@ -213,50 +213,39 @@ class CryptoLandApp {
     }
 
     updateTaxPageStats(stats) {
-    // Всего жителей - общее количество рефералов
+    // Всего жителей
     document.getElementById('totalReferrals').textContent = this.totalReferralsCount.toString();
     
     // Налоговые сборы - доступно к выводу
     document.getElementById('totalTaxes').textContent = this.utils.formatNumber(stats.availableReferral, 2) + ' USDT';
     
-    // Общий оборот - всего получено реферальных за все время
+    // Общий оборот
     document.getElementById('totalTurnover').textContent = this.utils.formatNumber(this.totalReferralEarned, 2) + ' USDT';
     
     // Бонус мэра - ИСПРАВЛЕНО!
     const mayorBonusElement = document.getElementById('mayorBonus');
     const anyLevelActive = this.levelBonuses.some(bonus => bonus === true);
     
-    // ОПРЕДЕЛЯЕМ ЯЗЫК ПРЯМО ИЗ КНОПКИ В ШАПКЕ
-    const langBtn = document.querySelector('.lang-btn.active');
-    const currentLang = langBtn ? langBtn.dataset.lang : 'ru';
-    
-    // Получаем переводы из config.js для этого языка
-    let bonusActiveText = 'Активен (+1%)';
-    let bonusInactiveText = 'Неактивен';
-    
-    try {
-        if (CONFIG?.TRANSLATIONS && CONFIG.TRANSLATIONS[currentLang]) {
-            const t = CONFIG.TRANSLATIONS[currentLang];
-            if (t.bonus_active) bonusActiveText = t.bonus_active;
-            if (t.bonus_inactive) bonusInactiveText = t.bonus_inactive;
-        }
-    } catch (e) {
-        console.warn('Error getting translations:', e);
-    }
-    
+    // Определяем язык - ИСПОЛЬЗУЕМ this.currentLanguage (он уже 'en')
     if (anyLevelActive) {
         const activeLevels = this.levelBonuses.filter(bonus => bonus).length;
-        const levelText = currentLang === 'ru' ? 'ур.' : 'lvl';
-        mayorBonusElement.textContent = `${bonusActiveText} (${activeLevels} ${levelText})`;
+        if (this.currentLanguage === 'en') {
+            mayorBonusElement.textContent = `Active (+1%) (${activeLevels} lvl)`;
+        } else {
+            mayorBonusElement.textContent = `Активен (+1%) (${activeLevels} ур.)`;
+        }
         mayorBonusElement.classList.add('bonus-active');
         mayorBonusElement.classList.remove('bonus-inactive', 'bonus-pending');
     } else {
-        mayorBonusElement.textContent = bonusInactiveText;
+        if (this.currentLanguage === 'en') {
+            mayorBonusElement.textContent = 'Inactive';
+        } else {
+            mayorBonusElement.textContent = 'Неактивен';
+        }
         mayorBonusElement.classList.add('bonus-inactive');
         mayorBonusElement.classList.remove('bonus-active', 'bonus-pending');
     }
 }
-
     
     // ===== ФУНКЦИИ ДЛЯ РЕФЕРАЛЬНОЙ ССЫЛКИ =====
     
@@ -1806,5 +1795,6 @@ window.app = null;
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new CryptoLandApp();
 });
+
 
 
