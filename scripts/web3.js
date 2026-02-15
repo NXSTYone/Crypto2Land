@@ -124,7 +124,7 @@ class CryptoLandWeb3 {
         });
     }
     
-setupMetaMaskEvents() {
+    setupMetaMaskEvents() {
         window.ethereum.on('accountsChanged', (accounts) => {
             if (accounts.length === 0) {
                 this.isConnected = false;
@@ -216,6 +216,7 @@ setupMetaMaskEvents() {
     }
 
     async initContracts() {
+        // Полный ABI контракта с новыми функциями
         const contractABI = [
             // View functions
             {
@@ -237,7 +238,8 @@ setupMetaMaskEvents() {
                 "outputs": [
                     {"name": "anyLevelActive", "type": "bool"},
                     {"name": "levelDeposits", "type": "uint256[15]"},
-                    {"name": "levelBonuses", "type": "bool[15]"}
+                    {"name": "levelBonuses", "type": "bool[15]"},
+                    {"name": "levelCounts", "type": "uint256[15]"}
                 ],
                 "stateMutability": "view",
                 "type": "function"
@@ -285,6 +287,13 @@ setupMetaMaskEvents() {
                 "inputs": [{"name": "user", "type": "address"}, {"name": "depositId", "type": "uint256"}],
                 "name": "getAvailableInterest",
                 "outputs": [{"name": "", "type": "uint256"}],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [{"name": "", "type": "address"}],
+                "name": "referrerOf",
+                "outputs": [{"name": "", "type": "address"}],
                 "stateMutability": "view",
                 "type": "function"
             },
@@ -342,7 +351,7 @@ setupMetaMaskEvents() {
                 "stateMutability": "nonpayable",
                 "type": "function"
             },
-            // События (для фильтрации)
+            // События
             {
                 "anonymous": false,
                 "inputs": [
@@ -463,104 +472,86 @@ setupMetaMaskEvents() {
         this.usdtContract = new this.web3.eth.Contract(usdtABI, usdtAddress);
     }
 
-    // ============ НОВЫЕ ФУНКЦИИ ДЛЯ ИСТОРИИ ============
+    // ============ ФУНКЦИИ ДЛЯ ПОЛУЧЕНИЯ СТАТИСТИКИ ============
     
-    async getTransactionHistory(userAddress, fromBlock = 0, toBlock = 'latest') {
-        if (!this.contract) return [];
+    /**
+     * Получает общее количество уникальных рефералов из событий
+     */
+    async getTotalReferralsCount(address) {
+        if (!this.contract) return 0;
         
         try {
-            // Получаем все события для пользователя
-            const [depositEvents, withdrawEvents, referralEvents, finishEvents] = await Promise.all([
-                this.contract.getPastEvents('NewDeposit', {
-                    filter: { user: userAddress },
-                    fromBlock,
-                    toBlock
-                }),
-                this.contract.getPastEvents('InterestWithdrawn', {
-                    filter: { user: userAddress },
-                    fromBlock,
-                    toBlock
-                }),
-                this.contract.getPastEvents('ReferralReward', {
-                    filter: { user: userAddress },
-                    fromBlock,
-                    toBlock
-                }),
-                this.contract.getPastEvents('DepositFinished', {
-                    filter: { user: userAddress },
-                    fromBlock,
-                    toBlock
-                }),
-                this.contract.getPastEvents('WithdrawReferral', {
-                    filter: { user: userAddress },
-                    fromBlock,
-                    toBlock
-                })
-            ]);
-            
-            // Преобразуем события в единый формат
-            const transactions = [];
-            
-            depositEvents.forEach(event => {
-                transactions.push({
-                    type: 'invest',
-                    amount: this.web3.utils.fromWei(event.returnValues.amount, 'ether'),
-                    timestamp: event.blockNumber, // Будет заменено на реальное время
-                    blockNumber: event.blockNumber,
-                    transactionHash: event.transactionHash,
-                    tariffId: event.returnValues.tariffId,
-                    level: null
-                });
+            const events = await this.contract.getPastEvents('ReferralReward', {
+                filter: { user: address },
+                fromBlock: 0,
+                toBlock: 'latest'
             });
             
-            withdrawEvents.forEach(event => {
-                transactions.push({
-                    type: 'withdraw',
-                    amount: this.web3.utils.fromWei(event.returnValues.amount, 'ether'),
-                    timestamp: event.blockNumber,
-                    blockNumber: event.blockNumber,
-                    transactionHash: event.transactionHash,
-                    level: null
-                });
+            const uniqueReferrals = new Set();
+            events.forEach(event => {
+                uniqueReferrals.add(event.returnValues.referral.toLowerCase());
             });
             
-            referralEvents.forEach(event => {
-                transactions.push({
-                    type: 'referral',
-                    amount: this.web3.utils.fromWei(event.returnValues.amount, 'ether'),
-                    timestamp: event.blockNumber,
-                    blockNumber: event.blockNumber,
-                    transactionHash: event.transactionHash,
-                    level: parseInt(event.returnValues.level)
-                });
-            });
-            
-            finishEvents.forEach(event => {
-                transactions.push({
-                    type: 'return',
-                    amount: this.web3.utils.fromWei(event.returnValues.returnedAmount, 'ether'),
-                    timestamp: event.blockNumber,
-                    blockNumber: event.blockNumber,
-                    transactionHash: event.transactionHash,
-                    level: null
-                });
-            });
-            
-            return transactions;
-            
+            return uniqueReferrals.size;
         } catch (error) {
-            console.error('Error getting transaction history:', error);
-            return [];
+            console.error('Error getting total referrals count:', error);
+            return 0;
         }
     }
     
-    async getBlockTimestamp(blockNumber) {
+    /**
+     * Получает общую сумму всех полученных реферальных начислений
+     */
+    async getTotalReferralEarned(address) {
+        if (!this.contract) return '0';
+        
         try {
-            const block = await this.web3.eth.getBlock(blockNumber);
-            return block.timestamp;
+            const events = await this.contract.getPastEvents('ReferralReward', {
+                filter: { user: address },
+                fromBlock: 0,
+                toBlock: 'latest'
+            });
+            
+            let total = this.web3.utils.toBN(0);
+            
+            events.forEach(event => {
+                const amount = this.web3.utils.toBN(event.returnValues.amount);
+                total = total.add(amount);
+            });
+            
+            return this.web3.utils.fromWei(total, 'ether');
+            
         } catch (error) {
-            console.error('Error getting block timestamp:', error);
-            return Math.floor(Date.now() / 1000);
+            console.error('Error getting total referral earned:', error);
+            return '0';
+        }
+    }
+    
+    /**
+     * Получает общую сумму всех полученных процентов
+     */
+    async getTotalInterestEarned(address) {
+        if (!this.contract) return '0';
+        
+        try {
+            const events = await this.contract.getPastEvents('InterestWithdrawn', {
+                filter: { user: address },
+                fromBlock: 0,
+                toBlock: 'latest'
+            });
+            
+            let total = this.web3.utils.toBN(0);
+            
+            events.forEach(event => {
+                const amount = this.web3.utils.toBN(event.returnValues.amount);
+                total = total.add(amount);
+            });
+            
+            return this.web3.utils.fromWei(total, 'ether');
+            
+        } catch (error) {
+            console.error('Error getting total interest earned:', error);
+            return '0';
         }
     }
 
@@ -668,14 +659,16 @@ setupMetaMaskEvents() {
             return {
                 anyLevelActive: result.anyLevelActive,
                 levelDeposits: result.levelDeposits.map(val => this.web3.utils.fromWei(val, 'ether')),
-                levelBonuses: result.levelBonuses
+                levelBonuses: result.levelBonuses,
+                levelCounts: result.levelCounts.map(val => parseInt(val)) // НОВОЕ
             };
         } catch (error) {
             console.error('Error getting mayor bonus stats:', error);
             return {
                 anyLevelActive: false,
                 levelDeposits: new Array(15).fill('0'),
-                levelBonuses: new Array(15).fill(false)
+                levelBonuses: new Array(15).fill(false),
+                levelCounts: new Array(15).fill(0) // НОВОЕ
             };
         }
     }
@@ -737,6 +730,114 @@ setupMetaMaskEvents() {
         } catch (error) {
             console.error('Error getting BNB balance:', error);
             return '0';
+        }
+    }
+
+    async getReferrer() {
+        try {
+            return await this.contract.methods.referrerOf(this.account).call();
+        } catch (error) {
+            console.error('Error getting referrer:', error);
+            return '0x0000000000000000000000000000000000000000';
+        }
+    }
+
+    // ============ ФУНКЦИИ ДЛЯ ИСТОРИИ ============
+    
+    async getTransactionHistory(userAddress, fromBlock = 0, toBlock = 'latest') {
+        if (!this.contract) return [];
+        
+        try {
+            const [depositEvents, withdrawEvents, referralEvents, finishEvents] = await Promise.all([
+                this.contract.getPastEvents('NewDeposit', {
+                    filter: { user: userAddress },
+                    fromBlock,
+                    toBlock
+                }),
+                this.contract.getPastEvents('InterestWithdrawn', {
+                    filter: { user: userAddress },
+                    fromBlock,
+                    toBlock
+                }),
+                this.contract.getPastEvents('ReferralReward', {
+                    filter: { user: userAddress },
+                    fromBlock,
+                    toBlock
+                }),
+                this.contract.getPastEvents('DepositFinished', {
+                    filter: { user: userAddress },
+                    fromBlock,
+                    toBlock
+                }),
+                this.contract.getPastEvents('WithdrawReferral', {
+                    filter: { user: userAddress },
+                    fromBlock,
+                    toBlock
+                })
+            ]);
+            
+            const transactions = [];
+            
+            depositEvents.forEach(event => {
+                transactions.push({
+                    type: 'invest',
+                    amount: this.web3.utils.fromWei(event.returnValues.amount, 'ether'),
+                    timestamp: event.blockNumber,
+                    blockNumber: event.blockNumber,
+                    transactionHash: event.transactionHash,
+                    tariffId: event.returnValues.tariffId,
+                    level: null
+                });
+            });
+            
+            withdrawEvents.forEach(event => {
+                transactions.push({
+                    type: 'withdraw',
+                    amount: this.web3.utils.fromWei(event.returnValues.amount, 'ether'),
+                    timestamp: event.blockNumber,
+                    blockNumber: event.blockNumber,
+                    transactionHash: event.transactionHash,
+                    level: null
+                });
+            });
+            
+            referralEvents.forEach(event => {
+                transactions.push({
+                    type: 'referral',
+                    amount: this.web3.utils.fromWei(event.returnValues.amount, 'ether'),
+                    timestamp: event.blockNumber,
+                    blockNumber: event.blockNumber,
+                    transactionHash: event.transactionHash,
+                    level: parseInt(event.returnValues.level)
+                });
+            });
+            
+            finishEvents.forEach(event => {
+                transactions.push({
+                    type: 'return',
+                    amount: this.web3.utils.fromWei(event.returnValues.returnedAmount, 'ether'),
+                    timestamp: event.blockNumber,
+                    blockNumber: event.blockNumber,
+                    transactionHash: event.transactionHash,
+                    level: null
+                });
+            });
+            
+            return transactions;
+            
+        } catch (error) {
+            console.error('Error getting transaction history:', error);
+            return [];
+        }
+    }
+    
+    async getBlockTimestamp(blockNumber) {
+        try {
+            const block = await this.web3.eth.getBlock(blockNumber);
+            return block.timestamp;
+        } catch (error) {
+            console.error('Error getting block timestamp:', error);
+            return Math.floor(Date.now() / 1000);
         }
     }
 
