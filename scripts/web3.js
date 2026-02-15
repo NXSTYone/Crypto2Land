@@ -123,7 +123,37 @@ class CryptoLandWeb3 {
             window.location.reload();
         });
     }
-
+    
+setupMetaMaskEvents() {
+        window.ethereum.on('accountsChanged', (accounts) => {
+            if (accounts.length === 0) {
+                this.isConnected = false;
+                this.account = null;
+                if (window.app) {
+                    window.app.updateConnectButton(false);
+                }
+            } else {
+                this.account = accounts[0];
+                if (window.app) {
+                    window.app.updateUserInfo();
+                }
+            }
+        });
+        
+        window.ethereum.on('chainChanged', () => {
+            window.location.reload();
+        });
+        
+        window.ethereum.on('disconnect', (error) => {
+            console.log('Wallet disconnected:', error);
+            this.isConnected = false;
+            this.account = null;
+            if (window.app) {
+                window.app.updateConnectButton(false);
+            }
+        });
+    }
+    
     async connectMetaMask() {
         try {
             const accounts = await window.ethereum.request({
@@ -732,3 +762,4 @@ class CryptoLandWeb3 {
 
 // Глобальный экземпляр
 window.cryptoLandWeb3 = new CryptoLandWeb3();
+
