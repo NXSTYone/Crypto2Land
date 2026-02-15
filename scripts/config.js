@@ -98,7 +98,7 @@ const CONFIG = {
             stat_trend: "всего жителей вашего города",
             stat_available: "реферальные начисления за все время",
             stat_daily: "проценты по тарифам за все время",
-            per_day: "сумма процентов и реферальных доступных к выводу",
+            per_day: "сумма балансов доступных к выводу",
             
             // Тарифы
             tariffs_title: "Доступные районы для инвестиций",
@@ -507,6 +507,7 @@ CONFIG.getContractABI = async function() {
 };
 
 window.CONFIG = CONFIG;
+
 
 
 
