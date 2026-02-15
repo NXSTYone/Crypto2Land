@@ -246,6 +246,17 @@ class CryptoLandWeb3 {
             },
             {
                 "inputs": [{"name": "user", "type": "address"}],
+                "name": "getReferralStats",
+                "outputs": [
+                    {"name": "totalReferrals", "type": "uint256"},
+                    {"name": "totalDeposits", "type": "uint256"},
+                    {"name": "level", "type": "uint256"}
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [{"name": "user", "type": "address"}],
                 "name": "getUserDeposits",
                 "outputs": [
                     {
@@ -472,27 +483,19 @@ class CryptoLandWeb3 {
         this.usdtContract = new this.web3.eth.Contract(usdtABI, usdtAddress);
     }
 
-    // ============ ФУНКЦИИ ДЛЯ ПОЛУЧЕНИЯ СТАТИСТИКИ ============
+    // ============ ИСПРАВЛЕННАЯ ФУНКЦИЯ ============
     
     /**
-     * Получает общее количество уникальных рефералов из событий
+     * ПОЛУЧАЕТ ОБЩЕЕ КОЛИЧЕСТВО РЕФЕРАЛОВ ИЗ КОНТРАКТА (СУММА ПО УРОВНЯМ)
      */
     async getTotalReferralsCount(address) {
         if (!this.contract) return 0;
         
         try {
-            const events = await this.contract.getPastEvents('ReferralReward', {
-                filter: { user: address },
-                fromBlock: 0,
-                toBlock: 'latest'
-            });
-            
-            const uniqueReferrals = new Set();
-            events.forEach(event => {
-                uniqueReferrals.add(event.returnValues.referral.toLowerCase());
-            });
-            
-            return uniqueReferrals.size;
+            // Используем функцию getReferralStats из контракта
+            const stats = await this.contract.methods.getReferralStats(address).call();
+            // totalReferrals - это ОБЩЕЕ количество рефералов (сумма по уровням)
+            return parseInt(stats.totalReferrals);
         } catch (error) {
             console.error('Error getting total referrals count:', error);
             return 0;
@@ -660,7 +663,7 @@ class CryptoLandWeb3 {
                 anyLevelActive: result.anyLevelActive,
                 levelDeposits: result.levelDeposits.map(val => this.web3.utils.fromWei(val, 'ether')),
                 levelBonuses: result.levelBonuses,
-                levelCounts: result.levelCounts.map(val => parseInt(val)) // НОВОЕ
+                levelCounts: result.levelCounts.map(val => parseInt(val))
             };
         } catch (error) {
             console.error('Error getting mayor bonus stats:', error);
@@ -668,7 +671,7 @@ class CryptoLandWeb3 {
                 anyLevelActive: false,
                 levelDeposits: new Array(15).fill('0'),
                 levelBonuses: new Array(15).fill(false),
-                levelCounts: new Array(15).fill(0) // НОВОЕ
+                levelCounts: new Array(15).fill(0)
             };
         }
     }
@@ -863,4 +866,3 @@ class CryptoLandWeb3 {
 
 // Глобальный экземпляр
 window.cryptoLandWeb3 = new CryptoLandWeb3();
-
