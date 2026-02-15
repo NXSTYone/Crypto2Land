@@ -22,7 +22,7 @@ class CryptoLandApp {
         this.totalInterestEarned = '0';
         this.levelDeposits = new Array(15).fill('0');
         this.levelBonuses = new Array(15).fill(false);
-        this.levelCounts = new Array(15).fill(0); // НОВОЕ - количество рефералов по уровням
+        this.levelCounts = new Array(15).fill(0);
         
         // Фразы мэра
         this.mayorPhrases = CONFIG.MAYOR_PHRASES;
@@ -130,7 +130,7 @@ class CryptoLandApp {
             const mayorStats = await this.web3.getMayorBonusStats();
             this.levelDeposits = mayorStats.levelDeposits;
             this.levelBonuses = mayorStats.levelBonuses;
-            this.levelCounts = mayorStats.levelCounts; // НОВОЕ - реальные данные из контракта
+            this.levelCounts = mayorStats.levelCounts;
             console.log('✅ Статистика уровней загружена:', this.levelCounts);
         } catch (error) {
             console.error('Error loading level stats:', error);
@@ -167,7 +167,7 @@ class CryptoLandApp {
             
             this.updateDashboardStats(stats);
             this.updateTaxPageStats(stats);
-            this.renderLevels(); // Таблица с реальными данными
+            this.renderLevels();
             
         } catch (error) {
             console.error('Error refreshing all stats:', error);
@@ -177,81 +177,104 @@ class CryptoLandApp {
     // ===== ОБНОВЛЕНИЕ UI =====
 
     updateDashboardStats(stats) {
-        // Население - общее количество рефералов
         document.getElementById('statPopulation').textContent = this.totalReferralsCount.toString();
         
-        // Общая казна - доступные проценты + реферальные
         const totalAvailable = parseFloat(stats.availableInterest) + parseFloat(stats.availableReferral);
         document.getElementById('statTotal').textContent = this.utils.formatNumber(totalAvailable, 2) + ' USDT';
         
-        // Налоговые сборы - всего получено реферальных за все время
         document.getElementById('statTaxes').textContent = this.utils.formatNumber(this.totalReferralEarned, 2) + ' USDT';
-        
-        // Доход с района - всего получено процентов за все время
         document.getElementById('statIncome').textContent = this.utils.formatNumber(this.totalInterestEarned, 2) + ' USDT';
         
-        // Обновляем остальные элементы
         document.getElementById('treasuryIncome').textContent = this.utils.formatNumber(stats.availableInterest, 2) + ' USDT';
         document.getElementById('treasuryTax').textContent = this.utils.formatNumber(stats.availableReferral, 2) + ' USDT';
         document.getElementById('treasuryDeposit').textContent = this.utils.formatNumber(stats.activeDeposits, 2) + ' USDT';
         
         document.getElementById('summaryTotal').textContent = this.utils.formatNumber(stats.totalDeposits, 2) + ' USDT';
         document.getElementById('summaryActive').textContent = this.utils.formatNumber(stats.activeDeposits, 2) + ' USDT';
-        
-        // ===== ИСПРАВЛЕНО: Заработано всего = только проценты за все время =====
         document.getElementById('summaryAccumulated').textContent = this.utils.formatNumber(this.totalInterestEarned, 2) + ' USDT';
-        
-        // ===== ИСПРАВЛЕНО: Доступно к выводу = только доступные проценты =====
         document.getElementById('summaryAvailable').textContent = this.utils.formatNumber(parseFloat(stats.availableInterest), 2) + ' USDT';
         
         document.getElementById('withdrawIncomeBtn').disabled = parseFloat(stats.availableInterest) <= 0;
         document.getElementById('withdrawTaxBtn').disabled = parseFloat(stats.availableReferral) <= 0;
         
-        // Обновляем бейдж в навигации
         const activeDepositsCount = this.userDeposits.filter(d => d.active).length;
         document.getElementById('navDepositCount').textContent = activeDepositsCount;
     }
 
+    // ===== ИСПРАВЛЕННАЯ ФУНКЦИЯ =====
     updateTaxPageStats(stats) {
-    // 1. Обновляем числовые значения (это безопасно)
-    const totalReferralsEl = document.getElementById('totalReferrals');
-    const totalTaxesEl = document.getElementById('totalTaxes');
-    const totalTurnoverEl = document.getElementById('totalTurnover');
-    if (totalReferralsEl) totalReferralsEl.textContent = (this.totalReferralsCount || 0).toString();
-    if (totalTaxesEl) totalTaxesEl.textContent = this.utils.formatNumber(stats?.availableReferral || 0, 2) + ' USDT';
-    if (totalTurnoverEl) totalTurnoverEl.textContent = this.utils.formatNumber(this.totalReferralEarned || 0, 2) + ' USDT';
+        // Обновляем числовые значения
+        const totalReferralsEl = document.getElementById('totalReferrals');
+        const totalTaxesEl = document.getElementById('totalTaxes');
+        const totalTurnoverEl = document.getElementById('totalTurnover');
+        
+        if (totalReferralsEl) totalReferralsEl.textContent = (this.totalReferralsCount || 0).toString();
+        if (totalTaxesEl) totalTaxesEl.textContent = this.utils.formatNumber(stats?.availableReferral || 0, 2) + ' USDT';
+        if (totalTurnoverEl) totalTurnoverEl.textContent = this.utils.formatNumber(this.totalReferralEarned || 0, 2) + ' USDT';
 
-    // 2. Обновляем статус бонуса мэра (САМЫЙ ПРОСТОЙ СПОСОБ)
-    const mayorBonusElement = document.getElementById('mayorBonus');
-    if (!mayorBonusElement) return;
+        // Обновляем статус бонуса мэра
+        const mayorBonusElement = document.getElementById('mayorBonus');
+        if (!mayorBonusElement) return;
 
-    // 3. Смотрим на активную кнопку языка ПРЯМО СЕЙЧАС
-    const activeLangButton = document.querySelector('.lang-btn.active');
-    const isEnglish = activeLangButton && activeLangButton.dataset.lang === 'en';
+        // Смотрим на активную кнопку языка ПРЯМО СЕЙЧАС
+        const activeLangButton = document.querySelector('.lang-btn.active');
+        const isEnglish = activeLangButton && activeLangButton.dataset.lang === 'en';
 
-    // 4. Проверяем, активен ли бонус
-    const anyLevelActive = this.levelBonuses && this.levelBonuses.some(bonus => bonus === true);
+        // Проверяем, активен ли бонус
+        const anyLevelActive = this.levelBonuses && this.levelBonuses.some(bonus => bonus === true);
 
-    // 5. Устанавливаем текст в зависимости от языка и статуса бонуса
-    if (anyLevelActive) {
-        const activeLevels = this.levelBonuses.filter(bonus => bonus).length;
-        if (isEnglish) {
-            mayorBonusElement.textContent = `Active (+1%) (${activeLevels} lvl)`;
+        // Устанавливаем текст
+        if (anyLevelActive) {
+            const activeLevels = this.levelBonuses.filter(bonus => bonus).length;
+            if (isEnglish) {
+                mayorBonusElement.textContent = `Active (+1%) (${activeLevels} lvl)`;
+            } else {
+                mayorBonusElement.textContent = `Активен (+1%) (${activeLevels} ур.)`;
+            }
+            mayorBonusElement.classList.add('bonus-active');
+            mayorBonusElement.classList.remove('bonus-inactive', 'bonus-pending');
         } else {
-            mayorBonusElement.textContent = `Активен (+1%) (${activeLevels} ур.)`;
+            if (isEnglish) {
+                mayorBonusElement.textContent = 'Inactive';
+            } else {
+                mayorBonusElement.textContent = 'Неактивен';
+            }
+            mayorBonusElement.classList.add('bonus-inactive');
+            mayorBonusElement.classList.remove('bonus-active', 'bonus-pending');
         }
-        mayorBonusElement.classList.add('bonus-active');
-        mayorBonusElement.classList.remove('bonus-inactive', 'bonus-pending');
-    } else {
-        if (isEnglish) {
-            mayorBonusElement.textContent = 'Inactive';
-        } else {
-            mayorBonusElement.textContent = 'Неактивен';
-        }
-        mayorBonusElement.classList.add('bonus-inactive');
-        mayorBonusElement.classList.remove('bonus-active', 'bonus-pending');
     }
-}
+    
+    // ===== ИСПРАВЛЕННАЯ ФУНКЦИЯ ПЕРЕКЛЮЧЕНИЯ ЯЗЫКА =====
+    switchLanguage(lang) {
+        if (!CONFIG.LANGUAGE.available.includes(lang)) return;
+        
+        this.currentLanguage = lang;
+        localStorage.setItem('cryptoland_language', lang);
+        
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+            if (btn.dataset.lang === lang) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+        
+        this.updateAllText();
+        this.renderTariffs();
+        
+        if (this.web3 && this.web3.isConnected) {
+            this.updateConnectButton(true);
+            // ПРИНУДИТЕЛЬНО ОБНОВЛЯЕМ СТАТИСТИКУ ПОСЛЕ СМЕНЫ ЯЗЫКА
+            setTimeout(() => {
+                this.refreshAllStats();
+            }, 100);
+        } else {
+            this.updateConnectButton(false);
+        }
+    }
+
+    // ===== ОСТАЛЬНЫЕ ФУНКЦИИ БЕЗ ИЗМЕНЕНИЙ =====
+    // (весь остальной код вашего файла остается точно таким же)
     
     // ===== ФУНКЦИИ ДЛЯ РЕФЕРАЛЬНОЙ ССЫЛКИ =====
     
@@ -430,30 +453,6 @@ class CryptoLandApp {
         
         const savedLang = localStorage.getItem('cryptoland_language') || this.currentLanguage;
         this.switchLanguage(savedLang);
-    }
-
-    switchLanguage(lang) {
-        if (!CONFIG.LANGUAGE.available.includes(lang)) return;
-        
-        this.currentLanguage = lang;
-        localStorage.setItem('cryptoland_language', lang);
-        
-        document.querySelectorAll('.lang-btn').forEach(btn => {
-            if (btn.dataset.lang === lang) {
-                btn.classList.add('active');
-            } else {
-                btn.classList.remove('active');
-            }
-        });
-        
-        this.updateAllText();
-        this.renderTariffs();
-        
-        if (this.web3 && this.web3.isConnected) {
-            this.updateConnectButton(true);
-        } else {
-            this.updateConnectButton(false);
-        }
     }
 
     updateAllText() {
@@ -1239,7 +1238,7 @@ class CryptoLandApp {
             const hasBonus = this.levelBonuses[index];
             const userTurnover = parseFloat(this.levelDeposits[index] || '0');
             const requiredTurnover = turnovers[index];
-            const referralCount = this.levelCounts[index] || 0; // РЕАЛЬНЫЕ ДАННЫЕ ИЗ КОНТРАКТА
+            const referralCount = this.levelCounts[index] || 0;
             
             let statusText = t.bonus_inactive;
             let statusClass = 'bonus-inactive';
@@ -1801,7 +1800,3 @@ window.app = null;
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new CryptoLandApp();
 });
-
-
-
-
