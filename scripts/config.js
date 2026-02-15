@@ -96,9 +96,9 @@ const CONFIG = {
             stat_taxes: "Налоговые сборы",
             stat_income: "Доход с района",
             stat_trend: "всего жителей вашего города",
-            stat_available: "доступно к выводу",
-            stat_daily: "начисляется ежедневно",
-            per_day: "всего жителей вашего города",
+            stat_available: "реферальные начисления за все время",
+            stat_daily: "проценты по тарифам за все время",
+            per_day: "сумма процентов и реферальных доступных к выводу",
             
             // Тарифы
             tariffs_title: "Доступные районы для инвестиций",
@@ -507,6 +507,7 @@ CONFIG.getContractABI = async function() {
 };
 
 window.CONFIG = CONFIG;
+
 
 
 
