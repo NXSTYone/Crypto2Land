@@ -467,6 +467,26 @@
                         <div class="stat-icon">
                             <i class="fas fa-user-friends"></i>
                         </div>
+                        <div class="referrer-info-card" id="referrerInfoCard" style="margin-bottom: 25px; display: none;">
+    <div class="referrer-info-header">
+        <i class="fas fa-user-plus"></i>
+        <h4 data-i18n="your_referrer">Ваш пригласитель</h4>
+    </div>
+    <div class="referrer-info-body">
+        <div class="referrer-avatar">
+            <i class="fas fa-user-tie"></i>
+        </div>
+        <div class="referrer-details">
+            <div class="referrer-address" id="referrerAddress">—</div>
+            <div class="referrer-stats">
+                <span class="referrer-stat">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span data-i18n="since">с</span> <span id="referrerSince">—</span>
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
                         <div class="stat-details">
                             <span class="stat-label" data-i18n="total_residents">Всего жителей</span>
                             <span class="stat-number" id="totalReferrals">0</span>
@@ -883,4 +903,5 @@
     <script src="scripts/app.js"></script>
 </body>
 </html>
+
 
