@@ -95,7 +95,7 @@ const CONFIG = {
             stat_treasury: "Общая казна",
             stat_taxes: "Налоговые сборы",
             stat_income: "Доход с района",
-            stat_trend: "всего жителей",
+            stat_trend: "всего жителей вашего города",
             stat_available: "доступно к выводу",
             stat_daily: "начисляется ежедневно",
             per_day: "всего жителей вашего города",
@@ -507,6 +507,7 @@ CONFIG.getContractABI = async function() {
 };
 
 window.CONFIG = CONFIG;
+
 
 
 
