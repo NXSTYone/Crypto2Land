@@ -98,7 +98,7 @@ const CONFIG = {
             stat_trend: "всего жителей",
             stat_available: "доступно к выводу",
             stat_daily: "начисляется ежедневно",
-            per_day: "за день",
+            per_day: "всего жителей вашего города",
             
             // Тарифы
             tariffs_title: "Доступные районы для инвестиций",
@@ -507,5 +507,6 @@ CONFIG.getContractABI = async function() {
 };
 
 window.CONFIG = CONFIG;
+
 
 
