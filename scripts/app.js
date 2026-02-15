@@ -212,27 +212,51 @@ class CryptoLandApp {
 
     updateTaxPageStats(stats) {
     // Всего жителей - общее количество рефералов
-    document.getElementById('totalReferrals').textContent = this.totalReferralsCount.toString();
+    const totalReferralsEl = document.getElementById('totalReferrals');
+    if (totalReferralsEl) {
+        totalReferralsEl.textContent = this.totalReferralsCount.toString();
+    }
     
     // Налоговые сборы - доступно к выводу
-    document.getElementById('totalTaxes').textContent = this.utils.formatNumber(stats.availableReferral, 2) + ' USDT';
+    const totalTaxesEl = document.getElementById('totalTaxes');
+    if (totalTaxesEl) {
+        totalTaxesEl.textContent = this.utils.formatNumber(stats.availableReferral, 2) + ' USDT';
+    }
     
     // Общий оборот - всего получено реферальных за все время
-    document.getElementById('totalTurnover').textContent = this.utils.formatNumber(this.totalReferralEarned, 2) + ' USDT';
+    const totalTurnoverEl = document.getElementById('totalTurnover');
+    if (totalTurnoverEl) {
+        totalTurnoverEl.textContent = this.utils.formatNumber(this.totalReferralEarned, 2) + ' USDT';
+    }
     
-    // Бонус мэра - ИСПРАВЛЕНО!
+    // Бонус мэра - с защитой
     const mayorBonusElement = document.getElementById('mayorBonus');
+    if (!mayorBonusElement) return;
+    
     const anyLevelActive = this.levelBonuses.some(bonus => bonus === true);
-    const t = CONFIG.TRANSLATIONS[this.currentLanguage];
+    
+    // Безопасное получение переводов
+    let bonusActiveText = 'Active (+1%)';
+    let bonusInactiveText = 'Inactive';
+    
+    try {
+        if (CONFIG?.TRANSLATIONS?.[this.currentLanguage]) {
+            const t = CONFIG.TRANSLATIONS[this.currentLanguage];
+            bonusActiveText = t.bonus_active || bonusActiveText;
+            bonusInactiveText = t.bonus_inactive || bonusInactiveText;
+        }
+    } catch (e) {
+        console.warn('Error getting translations:', e);
+    }
     
     if (anyLevelActive) {
         const activeLevels = this.levelBonuses.filter(bonus => bonus).length;
         const levelText = this.currentLanguage === 'ru' ? 'ур.' : 'lvl';
-        mayorBonusElement.textContent = ${t.bonus_active || 'Active (+1%)'} (${activeLevels} ${levelText});
+        mayorBonusElement.textContent = ${bonusActiveText} (${activeLevels} ${levelText});
         mayorBonusElement.classList.add('bonus-active');
         mayorBonusElement.classList.remove('bonus-inactive', 'bonus-pending');
     } else {
-        mayorBonusElement.textContent = t.bonus_inactive || 'Inactive';
+        mayorBonusElement.textContent = bonusInactiveText;
         mayorBonusElement.classList.add('bonus-inactive');
         mayorBonusElement.classList.remove('bonus-active', 'bonus-pending');
     }
@@ -1786,5 +1810,6 @@ window.app = null;
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new CryptoLandApp();
 });
+
 
 
