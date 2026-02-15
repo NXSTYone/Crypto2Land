@@ -197,10 +197,12 @@ class CryptoLandApp {
         
         document.getElementById('summaryTotal').textContent = this.utils.formatNumber(stats.totalDeposits, 2) + ' USDT';
         document.getElementById('summaryActive').textContent = this.utils.formatNumber(stats.activeDeposits, 2) + ' USDT';
-        document.getElementById('summaryAccumulated').textContent = this.utils.formatNumber(stats.totalEarned, 2) + ' USDT';
-        document.getElementById('summaryAvailable').textContent = this.utils.formatNumber(
-            parseFloat(stats.availableInterest) + parseFloat(stats.availableReferral), 2
-        ) + ' USDT';
+        
+        // ===== ИСПРАВЛЕНО: Заработано всего = только проценты за все время =====
+        document.getElementById('summaryAccumulated').textContent = this.utils.formatNumber(this.totalInterestEarned, 2) + ' USDT';
+        
+        // ===== ИСПРАВЛЕНО: Доступно к выводу = только доступные проценты =====
+        document.getElementById('summaryAvailable').textContent = this.utils.formatNumber(parseFloat(stats.availableInterest), 2) + ' USDT';
         
         document.getElementById('withdrawIncomeBtn').disabled = parseFloat(stats.availableInterest) <= 0;
         document.getElementById('withdrawTaxBtn').disabled = parseFloat(stats.availableReferral) <= 0;
@@ -211,30 +213,30 @@ class CryptoLandApp {
     }
 
     updateTaxPageStats(stats) {
-    // Всего жителей - общее количество рефералов
-    document.getElementById('totalReferrals').textContent = this.totalReferralsCount.toString();
-    
-    // Налоговые сборы - доступно к выводу
-    document.getElementById('totalTaxes').textContent = this.utils.formatNumber(stats.availableReferral, 2) + ' USDT';
-    
-    // Общий оборот - всего получено реферальных за все время
-    document.getElementById('totalTurnover').textContent = this.utils.formatNumber(this.totalReferralEarned, 2) + ' USDT';
-    
-    // Бонус мэра
-    const mayorBonusElement = document.getElementById('mayorBonus');
-    const anyLevelActive = this.levelBonuses.some(bonus => bonus === true);
-    
-    if (anyLevelActive) {
-        const activeLevels = this.levelBonuses.filter(bonus => bonus).length;
-        mayorBonusElement.textContent = `Активен (${activeLevels} ур.)`;
-        mayorBonusElement.classList.add('bonus-active');
-        mayorBonusElement.classList.remove('bonus-inactive', 'bonus-pending');
-    } else {
-        mayorBonusElement.textContent = 'Неактивен';
-        mayorBonusElement.classList.add('bonus-inactive');
-        mayorBonusElement.classList.remove('bonus-active', 'bonus-pending');
+        // Всего жителей - общее количество рефералов
+        document.getElementById('totalReferrals').textContent = this.totalReferralsCount.toString();
+        
+        // Налоговые сборы - доступно к выводу
+        document.getElementById('totalTaxes').textContent = this.utils.formatNumber(stats.availableReferral, 2) + ' USDT';
+        
+        // Общий оборот - всего получено реферальных за все время
+        document.getElementById('totalTurnover').textContent = this.utils.formatNumber(this.totalReferralEarned, 2) + ' USDT';
+        
+        // Бонус мэра
+        const mayorBonusElement = document.getElementById('mayorBonus');
+        const anyLevelActive = this.levelBonuses.some(bonus => bonus === true);
+        
+        if (anyLevelActive) {
+            const activeLevels = this.levelBonuses.filter(bonus => bonus).length;
+            mayorBonusElement.textContent = `Активен (${activeLevels} ур.)`;
+            mayorBonusElement.classList.add('bonus-active');
+            mayorBonusElement.classList.remove('bonus-inactive', 'bonus-pending');
+        } else {
+            mayorBonusElement.textContent = 'Неактивен';
+            mayorBonusElement.classList.add('bonus-inactive');
+            mayorBonusElement.classList.remove('bonus-active', 'bonus-pending');
+        }
     }
-}
     
     // ===== ФУНКЦИИ ДЛЯ РЕФЕРАЛЬНОЙ ССЫЛКИ =====
     
@@ -1784,5 +1786,4 @@ window.app = null;
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new CryptoLandApp();
 });
-
 
