@@ -225,6 +225,70 @@ class CryptoLandApp {
     
     // ===== КОНЕЦ НОВЫХ ФУНКЦИЙ =====
 
+    // ===== НОВАЯ ФУНКЦИЯ: ЗАГРУЗКА ИНФОРМАЦИИ О ПРИГЛАСИТЕЛЕ =====
+    // ===== ВЕРСИЯ С ДЕМО-ЗАГЛУШКОЙ =====
+    /**
+     * Загружает информацию о пригласителе пользователя
+     * ВНИМАНИЕ: Сейчас работает в демо-режиме, всегда показывает тестовую карточку
+     */
+    async loadReferrerInfo() {
+        const referrerCard = document.getElementById('referrerInfoCard');
+        if (!referrerCard) return;
+        
+        // ===== ДЕМО-РЕЖИМ =====
+        // Всегда показываем тестовую карточку для демонстрации
+        // Удалите этот блок после тестирования
+        console.log('📢 ДЕМО-РЕЖИМ: показываем тестовую карточку пригласителя');
+        referrerCard.style.display = 'block';
+        
+        // Тестовые данные
+        const demoAddress = '0x7F4cF8aB3dE2...';
+        const demoDate = '15.02.2026';
+        
+        document.getElementById('referrerAddress').textContent = demoAddress;
+        document.getElementById('referrerSince').textContent = demoDate;
+        return;
+        // ===== КОНЕЦ ДЕМО-РЕЖИМА =====
+        
+        /* ===== РЕАЛЬНЫЙ КОД =====
+        // Раскомментируйте этот блок и удалите демо-блок после тестирования
+        
+        if (!this.web3 || !this.web3.isConnected || !this.web3.account) {
+            referrerCard.style.display = 'none';
+            return;
+        }
+        
+        try {
+            // Получаем адрес реферера из контракта
+            const referrer = await this.web3.contract.methods.referrerOf(this.web3.account).call();
+            
+            // Если реферера нет (нулевой адрес)
+            if (referrer === '0x0000000000000000000000000000000000000000') {
+                referrerCard.style.display = 'none';
+                return;
+            }
+            
+            // Показываем карточку
+            referrerCard.style.display = 'block';
+            
+            // Форматируем адрес
+            const shortAddress = this.web3.formatAddress(referrer);
+            document.getElementById('referrerAddress').textContent = shortAddress;
+            
+            // Получаем время первой инвестиции (если есть в контракте)
+            // В вашем контракте нет такой функции, показываем просто адрес
+            document.getElementById('referrerSince').textContent = '—';
+            
+            // TODO: если добавите в контракт функцию getFirstDepositTime, можно показывать дату
+            
+        } catch (error) {
+            console.error('Error loading referrer info:', error);
+            referrerCard.style.display = 'none';
+        }
+        ===== КОНЕЦ РЕАЛЬНОГО КОДА ===== */
+    }
+    // ===== КОНЕЦ НОВОЙ ФУНКЦИИ =====
+
     isTelegramMiniApp() {
         return window.Telegram && Telegram.WebApp && Telegram.WebApp.initData !== '';
     }
@@ -695,6 +759,7 @@ class CryptoLandApp {
             await this.loadDeposits();
             await this.renderLevels();
             await this.loadTransactionHistory();
+            await this.loadReferrerInfo(); // ← ДОБАВЛЕНО: загружаем информацию о пригласителе
             
             this.updateConnectButton(true);
             
@@ -1221,6 +1286,7 @@ class CryptoLandApp {
         if (tabName === 'tax') {
             this.updateReferralLink();
             this.renderLevels();
+            this.loadReferrerInfo(); // ← ДОБАВЛЕНО: загружаем информацию о пригласителе при переходе на страницу
             
             document.querySelectorAll('.levels-nav-btn').forEach(btn => {
                 btn.classList.remove('active');
