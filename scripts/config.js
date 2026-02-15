@@ -190,6 +190,8 @@ const CONFIG = {
             mayor_bonus: "Бонус мэра",
             bonus_inactive: "Неактивен",
             bonus_active: "Активен",
+            your_referrer: "Ваш пригласитель",
+            since: "с",
             
             // Реферальные уровни
             levels_title: "Реферальные уровни",
@@ -385,6 +387,9 @@ const CONFIG = {
             mayor_bonus: "Mayor's bonus",
             bonus_inactive: "Inactive",
             bonus_active: "Active",
+            your_referrer: "Your referrer",
+            since: "since",
+
             
             // Referral levels
             levels_title: "Referral Levels",
@@ -502,3 +507,4 @@ CONFIG.getContractABI = async function() {
 };
 
 window.CONFIG = CONFIG;
+
