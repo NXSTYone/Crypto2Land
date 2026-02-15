@@ -233,7 +233,7 @@ const CONFIG = {
             connect: "Подключить",
             invest_title: "Инвестиция в",
             invest_amount: "Сумма инвестиции (USDT)",
-            referrer: "Аплайнер (необязательно)",
+            referrer: "Пригласитель (необязательно)",
             minimum: "Минимум",
             available_balance: "Доступно",
             investment_summary: "Сводка по инвестиции",
@@ -507,6 +507,7 @@ CONFIG.getContractABI = async function() {
 };
 
 window.CONFIG = CONFIG;
+
 
 
 
