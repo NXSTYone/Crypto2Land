@@ -229,7 +229,6 @@ class CryptoLandApp {
     }
 }
 
-    
     // ===== ИСПРАВЛЕННАЯ ФУНКЦИЯ ПЕРЕКЛЮЧЕНИЯ ЯЗЫКА =====
     switchLanguage(lang) {
         if (!CONFIG.LANGUAGE.available.includes(lang)) return;
@@ -1786,4 +1785,5 @@ window.app = null;
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new CryptoLandApp();
 });
+
 
