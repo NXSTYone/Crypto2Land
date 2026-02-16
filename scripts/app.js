@@ -201,33 +201,44 @@ class CryptoLandApp {
         document.getElementById('navDepositCount').textContent = activeDepositsCount;
     }
 
-    updateTaxPageStats(stats) {
-    // Всего жителей - общее количество рефералов
-    document.getElementById('totalReferrals').textContent = this.totalReferralsCount.toString();
-    
-    // Налоговые сборы - доступно к выводу
-    document.getElementById('totalTaxes').textContent = this.utils.formatNumber(stats.availableReferral, 2) + ' USDT';
-    
-    // Общий оборот - всего получено реферальных за все время
-    document.getElementById('totalTurnover').textContent = this.utils.formatNumber(this.totalReferralEarned, 2) + ' USDT';
-    
-    // Бонус мэра - УПРОЩЕННАЯ ВЕРСИЯ
-    const mayorBonusElement = document.getElementById('mayorBonus');
-    const anyLevelActive = this.levelBonuses.some(bonus => bonus === true);
-    
-    // Получаем переводы из config.js
-    const t = CONFIG.TRANSLATIONS[this.currentLanguage];
-    
-    if (anyLevelActive) {
-        mayorBonusElement.textContent = t.bonus_active || 'Активен';
-        mayorBonusElement.classList.add('bonus-active');
-        mayorBonusElement.classList.remove('bonus-inactive', 'bonus-pending');
-    } else {
-        mayorBonusElement.textContent = t.bonus_inactive || 'Неактивен';
-        mayorBonusElement.classList.add('bonus-inactive');
-        mayorBonusElement.classList.remove('bonus-active', 'bonus-pending');
+    // ===== НОВАЯ ФУНКЦИЯ ДЛЯ ПРИНУДИТЕЛЬНОГО ОБНОВЛЕНИЯ БЕЙДЖА =====
+    forceUpdateMayorBonus() {
+        const mayorBonusElement = document.getElementById('mayorBonus');
+        if (!mayorBonusElement) return;
+
+        // Смотрим на активную кнопку языка ПРЯМО СЕЙЧАС
+        const langBtn = document.querySelector('.lang-btn.active');
+        const isEnglish = langBtn ? langBtn.dataset.lang === 'en' : false;
+
+        // Проверяем, активен ли бонус
+        const anyLevelActive = this.levelBonuses && this.levelBonuses.some(bonus => bonus === true);
+
+        // Устанавливаем текст напрямую
+        if (anyLevelActive) {
+            mayorBonusElement.textContent = isEnglish ? 'Active' : 'Активен';
+            mayorBonusElement.classList.add('bonus-active');
+            mayorBonusElement.classList.remove('bonus-inactive', 'bonus-pending');
+        } else {
+            mayorBonusElement.textContent = isEnglish ? 'Inactive' : 'Неактивен';
+            mayorBonusElement.classList.add('bonus-inactive');
+            mayorBonusElement.classList.remove('bonus-active', 'bonus-pending');
+        }
     }
-}
+
+    // ===== ИСПРАВЛЕННАЯ ФУНКЦИЯ =====
+    updateTaxPageStats(stats) {
+        // Всего жителей - общее количество рефералов
+        document.getElementById('totalReferrals').textContent = this.totalReferralsCount.toString();
+        
+        // Налоговые сборы - доступно к выводу
+        document.getElementById('totalTaxes').textContent = this.utils.formatNumber(stats.availableReferral, 2) + ' USDT';
+        
+        // Общий оборот - всего получено реферальных за все время
+        document.getElementById('totalTurnover').textContent = this.utils.formatNumber(this.totalReferralEarned, 2) + ' USDT';
+        
+        // Бонус мэра - используем новую функцию
+        this.forceUpdateMayorBonus();
+    }
 
     // ===== ИСПРАВЛЕННАЯ ФУНКЦИЯ ПЕРЕКЛЮЧЕНИЯ ЯЗЫКА =====
     switchLanguage(lang) {
@@ -247,9 +258,11 @@ class CryptoLandApp {
         this.updateAllText();
         this.renderTariffs();
         
+        // ПРИНУДИТЕЛЬНО ОБНОВЛЯЕМ БЕЙДЖ
+        this.forceUpdateMayorBonus();
+        
         if (this.web3 && this.web3.isConnected) {
             this.updateConnectButton(true);
-            // ПРИНУДИТЕЛЬНО ОБНОВЛЯЕМ СТАТИСТИКУ ПОСЛЕ СМЕНЫ ЯЗЫКА
             setTimeout(() => {
                 this.refreshAllStats();
             }, 100);
@@ -258,8 +271,35 @@ class CryptoLandApp {
         }
     }
 
+    // ===== ИСПРАВЛЕННАЯ ФУНКЦИЯ ИНИЦИАЛИЗАЦИИ ЯЗЫКА =====
+    initLanguage() {
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const lang = btn.dataset.lang;
+                this.switchLanguage(lang);
+            });
+        });
+        
+        const savedLang = localStorage.getItem('cryptoland_language') || this.currentLanguage;
+        
+        // Устанавливаем начальный язык
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+            if (btn.dataset.lang === savedLang) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+        
+        this.currentLanguage = savedLang;
+        
+        // Принудительно обновляем бейдж после инициализации
+        setTimeout(() => {
+            this.forceUpdateMayorBonus();
+        }, 500);
+    }
+
     // ===== ОСТАЛЬНЫЕ ФУНКЦИИ БЕЗ ИЗМЕНЕНИЙ =====
-    // (весь остальной код вашего файла остается точно таким же)
     
     // ===== ФУНКЦИИ ДЛЯ РЕФЕРАЛЬНОЙ ССЫЛКИ =====
     
@@ -428,18 +468,6 @@ class CryptoLandApp {
     }
 
     // ===== ЯЗЫК =====
-    initLanguage() {
-        document.querySelectorAll('.lang-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const lang = btn.dataset.lang;
-                this.switchLanguage(lang);
-            });
-        });
-        
-        const savedLang = localStorage.getItem('cryptoland_language') || this.currentLanguage;
-        this.switchLanguage(savedLang);
-    }
-
     updateAllText() {
         const t = CONFIG.TRANSLATIONS[this.currentLanguage];
         
