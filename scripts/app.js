@@ -1701,7 +1701,9 @@ async loadDeposits() {
         
         const t = CONFIG.TRANSLATIONS[this.currentLanguage];
         
-        container.innerHTML = deposits.map((dep, index) => {
+        let html = '';
+        for (let i = 0; i < deposits.length; i++) {
+            const dep = deposits[i];
             const tariff = this.tariffs[dep.tariffId] || this.tariffs[0];
             const tariffName = this.currentLanguage === 'ru' ? tariff.name : tariff.name_en;
             const dailyPercent = tariff.dailyPercent;
@@ -1711,52 +1713,35 @@ async loadDeposits() {
             const now = new Date();
             const progress = Math.min(100, ((now - startDate) / (endDate - startDate)) * 100);
             
-            return `
-                <div class="deposit-card" data-deposit-id="${index}">
-                    <div class="deposit-header">
-                        <div class="deposit-name">${tariffName}</div>
-                        <div class="deposit-status ${!dep.active ? 'finished' : ''}">
-                            ${dep.active ? t.filter_active : t.filter_finished}
-                        </div>
-                    </div>
-                    <div class="deposit-stats-grid">
-                        <div class="deposit-stat">
-                            <span class="stat-label">${t.amount}</span>
-                            <span class="stat-number">${this.utils.formatNumber(dep.amount)} USDT</span>
-                        </div>
-                        <div class="deposit-stat">
-                            <span class="stat-label">${t.daily_income}</span>
-                            <span class="stat-number profit">${this.utils.formatNumber(dailyIncome)} USDT</span>
-                        </div>
-                        <div class="deposit-stat">
-                            <span class="stat-label">${t.start_date || 'Начало'}</span>
-                            <span class="stat-number">${startDate.toLocaleDateString()}</span>
-                        </div>
-                        <div class="deposit-stat">
-                            <span class="stat-label">${t.end_date}</span>
-                            <span class="stat-number">${endDate.toLocaleDateString()}</span>
-                        </div>
-                    </div>
-                    ${dep.active ? `
-                        <div class="deposit-progress">
-                            <div class="progress-header">
-                                <span>${t.progress || 'Прогресс'}</span>
-                                <span>${progress.toFixed(0)}%</span>
-                            </div>
-                            <div class="progress-track">
-                                <div class="progress-fill" style="width: ${progress}%"></div>
-                            </div>
-                        </div>
-                        <div class="deposit-actions">
-<button class="deposit-btn collect" data-deposit-id="${index}">
-                                <i class="fas fa-coins"></i>
-                                ${t.collect_income || 'Собрать доход'}
-                            </button>
-                        </div>
-                    ` : ''}
-                </div>
-            `;
-        }).join('');
+            html += '<div class="deposit-card" data-deposit-id="' + i + '">';
+            html += '<div class="deposit-header">';
+            html += '<div class="deposit-name">' + tariffName + '</div>';
+html += '<div class="deposit-status ' + (!dep.active ? 'finished' : '') + '">';
+            html += (dep.active ? t.filter_active : t.filter_finished);
+            html += '</div></div>';
+            
+            html += '<div class="deposit-stats-grid">';
+            html += '<div class="deposit-stat"><span class="stat-label">' + t.amount + '</span><span class="stat-number">' + this.utils.formatNumber(dep.amount) + ' USDT</span></div>';
+            html += '<div class="deposit-stat"><span class="stat-label">' + t.daily_income + '</span><span class="stat-number profit">' + this.utils.formatNumber(dailyIncome) + ' USDT</span></div>';
+            html += '<div class="deposit-stat"><span class="stat-label">' + (t.start_date || 'Начало') + '</span><span class="stat-number">' + startDate.toLocaleDateString() + '</span></div>';
+            html += '<div class="deposit-stat"><span class="stat-label">' + t.end_date + '</span><span class="stat-number">' + endDate.toLocaleDateString() + '</span></div>';
+            html += '</div>';
+            
+            if (dep.active) {
+                html += '<div class="deposit-progress">';
+                html += '<div class="progress-header"><span>' + (t.progress || 'Прогресс') + '</span><span>' + progress.toFixed(0) + '%</span></div>';
+                html += '<div class="progress-track"><div class="progress-fill" style="width: ' + progress + '%"></div></div>';
+                html += '</div>';
+                html += '<div class="deposit-actions">';
+                html += '<button class="deposit-btn collect" data-deposit-id="' + i + '">';
+                html += '<i class="fas fa-coins"></i> ' + (t.collect_income || 'Собрать доход');
+                html += '</button></div>';
+            }
+            
+            html += '</div>';
+        }
+        
+        container.innerHTML = html;
         
         document.querySelectorAll('.deposit-btn.collect').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -1888,4 +1873,5 @@ window.app = null;
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new CryptoLandApp();
 });
+
 
