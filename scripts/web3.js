@@ -112,9 +112,28 @@ class CryptoLandWeb3 {
                     window.app.updateConnectButton(false);
                 }
             } else {
+                const oldAccount = this.account;
                 this.account = accounts[0];
                 if (window.app) {
-                    window.app.updateUserInfo();
+                    window.app.utils.showNotification(
+                        window.app.currentLanguage === 'ru' ? 
+                        `Аккаунт изменен: ${this.formatAddress(this.account)}` : 
+                        `Account changed: ${this.formatAddress(this.account)}`, 
+                        'info'
+                    );
+                    window.app.refreshAllStats();
+                    
+                    // Проверяем реферальную ссылку при смене аккаунта
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const referrer = urlParams.get('ref');
+                    if (referrer && referrer.toLowerCase() !== this.account.toLowerCase()) {
+                        window.app.utils.showNotification(
+                            window.app.currentLanguage === 'ru' ? 
+                            'Реферальная ссылка не соответствует текущему аккаунту' : 
+                            'Referral link does not match current account', 
+                            'warning'
+                        );
+                    }
                 }
             }
         });
@@ -133,9 +152,28 @@ class CryptoLandWeb3 {
                     window.app.updateConnectButton(false);
                 }
             } else {
+                const oldAccount = this.account;
                 this.account = accounts[0];
                 if (window.app) {
-                    window.app.updateUserInfo();
+                    window.app.utils.showNotification(
+                        window.app.currentLanguage === 'ru' ? 
+                        `Аккаунт изменен: ${this.formatAddress(this.account)}` : 
+                        `Account changed: ${this.formatAddress(this.account)}`, 
+                        'info'
+                    );
+                    window.app.refreshAllStats();
+                    
+                    // Проверяем реферальную ссылку при смене аккаунта
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const referrer = urlParams.get('ref');
+                    if (referrer && referrer.toLowerCase() !== this.account.toLowerCase()) {
+                        window.app.utils.showNotification(
+                            window.app.currentLanguage === 'ru' ? 
+                            'Реферальная ссылка не соответствует текущему аккаунту' : 
+                            'Referral link does not match current account', 
+                            'warning'
+                        );
+                    }
                 }
             }
         });
@@ -174,6 +212,51 @@ class CryptoLandWeb3 {
         } catch (error) {
             console.error("MetaMask connection error:", error);
             throw error;
+        }
+    }
+
+    // ===== НОВАЯ ФУНКЦИЯ ДЛЯ ПЕРЕКЛЮЧЕНИЯ АККАУНТА =====
+    async switchToAccount(targetAccount) {
+        if (!window.ethereum || this.walletType !== 'metamask') {
+            console.log('Switch account only available for MetaMask');
+            return false;
+        }
+        
+        try {
+            // Запрашиваем аккаунты снова
+            const accounts = await window.ethereum.request({
+                method: 'eth_requestAccounts'
+            });
+            
+            // Проверяем, есть ли целевой аккаунт в списке
+            const targetLower = targetAccount.toLowerCase();
+            const found = accounts.some(acc => acc.toLowerCase() === targetLower);
+            
+            if (found) {
+                // В MetaMask нет прямого метода переключения, но мы можем попросить пользователя
+                if (window.app) {
+                    window.app.utils.showNotification(
+                        window.app.currentLanguage === 'ru' ? 
+                        `Пожалуйста, переключитесь на аккаунт ${this.formatAddress(targetAccount)} в MetaMask` : 
+                        `Please switch to account ${this.formatAddress(targetAccount)} in MetaMask`, 
+                        'warning'
+                    );
+                }
+                return false;
+            } else {
+                if (window.app) {
+                    window.app.utils.showNotification(
+                        window.app.currentLanguage === 'ru' ? 
+                        'Аккаунт не найден в MetaMask' : 
+                        'Account not found in MetaMask', 
+                        'error'
+                    );
+                }
+                return false;
+            }
+        } catch (error) {
+            console.error('Error switching account:', error);
+            return false;
         }
     }
 
@@ -866,3 +949,5 @@ class CryptoLandWeb3 {
 
 // Глобальный экземпляр
 window.cryptoLandWeb3 = new CryptoLandWeb3();
+
+
