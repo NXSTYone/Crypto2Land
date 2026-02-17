@@ -48,12 +48,27 @@ class CryptoLandApp {
         this.initEvents();
         this.initLanguage();
         
-        // Обработка реферальной ссылки
+        // Обработка реферальной ссылки - УЛУЧШЕНО
         const urlParams = new URLSearchParams(window.location.search);
         const referrer = urlParams.get('ref');
         
         if (referrer && this.utils.isValidAddress(referrer)) {
+            // Сохраняем реферера
             this.pendingReferrer = referrer;
+            
+            // Если кошелек уже подключен, проверяем соответствие аккаунта
+            if (this.web3 && this.web3.isConnected && this.web3.account) {
+                if (this.web3.account.toLowerCase() !== referrer.toLowerCase()) {
+                    this.utils.showNotification(
+                        this.currentLanguage === 'ru' ? 
+                        `Реферальная ссылка от аккаунта ${this.web3.formatAddress(referrer)}, но подключен другой аккаунт. Переключитесь в MetaMask.` : 
+                        `Referral link from account ${this.web3.formatAddress(referrer)}, but different account connected. Switch in MetaMask.`, 
+                        'warning'
+                    );
+                }
+            }
+            
+            // Показываем модалку через 1.5 секунды
             setTimeout(() => {
                 this.showReferrerConfirmation(referrer);
             }, 1500);
@@ -169,6 +184,9 @@ class CryptoLandApp {
             this.updateTaxPageStats(stats);
             this.renderLevels();
             
+            // Обновляем баланс в шапке
+            await this.updateHeaderBalance();
+            
         } catch (error) {
             console.error('Error refreshing all stats:', error);
         }
@@ -199,6 +217,27 @@ class CryptoLandApp {
         
         const activeDepositsCount = this.userDeposits.filter(d => d.active).length;
         document.getElementById('navDepositCount').textContent = activeDepositsCount;
+        
+        // Обновляем баланс в шапке
+        this.updateHeaderBalance();
+    }
+
+    // ===== НОВАЯ ФУНКЦИЯ ДЛЯ ОБНОВЛЕНИЯ БАЛАНСА В ШАПКЕ =====
+    async updateHeaderBalance() {
+        const balanceElement = document.getElementById('headerWalletBalance');
+        if (!balanceElement) return;
+        
+        if (this.web3 && this.web3.isConnected && this.web3.account) {
+            try {
+                const balance = await this.web3.getUSDTBalance();
+                balanceElement.textContent = this.utils.formatNumber(balance, 2);
+            } catch (error) {
+                console.error('Error updating header balance:', error);
+                balanceElement.textContent = '0.00';
+            }
+        } else {
+            balanceElement.textContent = '0.00';
+        }
     }
 
     // ===== НОВАЯ ФУНКЦИЯ ДЛЯ ПРИНУДИТЕЛЬНОГО ОБНОВЛЕНИЯ БЕЙДЖА =====
@@ -299,7 +338,7 @@ class CryptoLandApp {
         }, 500);
     }
 
-    // ===== ОСТАЛЬНЫЕ ФУНКЦИИ БЕЗ ИЗМЕНЕНИЙ =====
+    // ===== ОСТАЛЬНЫЕ ФУНКЦИИ =====
     
     // ===== ФУНКЦИИ ДЛЯ РЕФЕРАЛЬНОЙ ССЫЛКИ =====
     
@@ -318,6 +357,10 @@ class CryptoLandApp {
     showReferrerConfirmation(referrerAddress) {
         const t = CONFIG.TRANSLATIONS[this.currentLanguage];
         const shortAddress = this.web3.formatAddress(referrerAddress);
+        
+        // Проверяем, совпадает ли текущий аккаунт с реферером
+        const currentAccount = this.web3?.account;
+        const wrongAccount = currentAccount && currentAccount.toLowerCase() !== referrerAddress.toLowerCase();
         
         let modal = document.getElementById('referrerConfirmModal');
         if (!modal) {
@@ -343,6 +386,18 @@ class CryptoLandApp {
                             Вы перешли по реферальной ссылке от пользователя:
                         </p>
                         <p style="font-size: 18px; font-weight: 700; background: rgba(255,215,0,0.1); padding: 10px; border-radius: 10px; margin-bottom: 20px;" id="referrerAddressDisplay"></p>
+                        
+                        ${wrongAccount ? `
+                        <div style="background: rgba(255, 193, 7, 0.2); border-left: 4px solid #FFC107; padding: 15px; margin-bottom: 20px; text-align: left;">
+                            <p style="margin: 0; font-size: 14px; color: #FFC107;">
+                                <i class="fas fa-exclamation-triangle"></i> 
+                                ${this.currentLanguage === 'ru' ? 
+                                    'Сейчас подключен другой аккаунт. Переключитесь в MetaMask на правильный аккаунт и обновите страницу.' : 
+                                    'Currently connected to a different account. Switch to the correct account in MetaMask and refresh the page.'}
+                            </p>
+                        </div>
+                        ` : ''}
+                        
                         <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 25px;" data-i18n="referrer_confirm_note">
                             Если вы подтвердите, при первой инвестиции этот пользователь станет вашим реферером.<br>
                             Реферер будет получать процент от ваших доходов.
@@ -352,7 +407,7 @@ class CryptoLandApp {
                                 <i class="fas fa-times"></i>
                                 <span data-i18n="referrer_decline">Нет, не хочу</span>
                             </button>
-                            <button class="modal-btn primary" id="acceptReferrerBtn">
+                            <button class="modal-btn primary" id="acceptReferrerBtn" ${wrongAccount ? 'disabled' : ''}>
                                 <i class="fas fa-check"></i>
                                 <span data-i18n="referrer_accept">Да, подтвердить</span>
                             </button>
@@ -372,6 +427,12 @@ class CryptoLandApp {
             addressDisplay.textContent = shortAddress;
         }
         
+        // Обновляем состояние кнопки при повторном открытии
+        const acceptBtn = document.getElementById('acceptReferrerBtn');
+        if (acceptBtn) {
+            acceptBtn.disabled = wrongAccount;
+        }
+        
         document.getElementById('modalOverlay').style.display = 'block';
         modal.style.display = 'block';
     }
@@ -386,6 +447,20 @@ class CryptoLandApp {
         if (!this.pendingReferrer) {
             this.hideReferrerModal();
             return;
+        }
+        
+        // Дополнительная проверка аккаунта
+        if (this.web3 && this.web3.isConnected && this.web3.account) {
+            if (this.web3.account.toLowerCase() !== this.pendingReferrer.toLowerCase()) {
+                this.utils.showNotification(
+                    this.currentLanguage === 'ru' ? 
+                    'Нельзя подтвердить реферера для другого аккаунта' : 
+                    'Cannot confirm referrer for a different account', 
+                    'error'
+                );
+                this.hideReferrerModal();
+                return;
+            }
         }
         
         const hasReferrer = await this.checkIfHasReferrer();
@@ -857,6 +932,23 @@ class CryptoLandApp {
             await this.loadReferrerInfo();
             
             this.updateConnectButton(true);
+            
+            // Обновляем баланс в шапке
+            await this.updateHeaderBalance();
+            
+            // Проверяем реферальную ссылку после подключения
+            const urlParams = new URLSearchParams(window.location.search);
+            const referrer = urlParams.get('ref');
+            if (referrer && this.pendingReferrer) {
+                if (this.web3.account.toLowerCase() !== referrer.toLowerCase()) {
+                    this.utils.showNotification(
+                        this.currentLanguage === 'ru' ? 
+                        'Реферальная ссылка не соответствует подключенному аккаунту' : 
+                        'Referral link does not match connected account', 
+                        'warning'
+                    );
+                }
+            }
             
             this.utils.showNotification(
                 this.currentLanguage === 'ru' ? 'Кошелек успешно подключен!' : 'Wallet connected successfully!', 
@@ -1414,7 +1506,27 @@ class CryptoLandApp {
         
         let referrerAddress = '0x0000000000000000000000000000000000000000';
         
+        // Проверяем, совпадает ли реферер с текущим аккаунтом
+        if (confirmedReferrer && this.web3.account && confirmedReferrer.toLowerCase() === this.web3.account.toLowerCase()) {
+            this.utils.showNotification(
+                this.currentLanguage === 'ru' ? 
+                'Нельзя использовать свой же адрес как реферера' : 
+                'Cannot use your own address as referrer', 
+                'error'
+            );
+            return;
+        }
+        
         if (referrerInput && this.utils.isValidAddress(referrerInput)) {
+            if (referrerInput.toLowerCase() === this.web3.account.toLowerCase()) {
+                this.utils.showNotification(
+                    this.currentLanguage === 'ru' ? 
+                    'Нельзя использовать свой же адрес как реферера' : 
+                    'Cannot use your own address as referrer', 
+                    'error'
+                );
+                return;
+            }
             referrerAddress = referrerInput;
             console.log('📝 Используем реферера из поля ввода:', referrerAddress);
             localStorage.removeItem('confirmedReferrer');
@@ -1595,106 +1707,106 @@ class CryptoLandApp {
         }
     }
 
-    async loadDeposits() {
-        const container = document.getElementById('depositsGrid');
-        const emptyState = document.getElementById('emptyDeposits');
-        const navBadge = document.getElementById('navDepositCount');
+async loadDeposits() {
+    const container = document.getElementById('depositsGrid');
+    const emptyState = document.getElementById('emptyDeposits');
+    const navBadge = document.getElementById('navDepositCount');
+    
+    if (!container || !emptyState) return;
+    
+    if (!this.web3 || !this.web3.isConnected) {
+        emptyState.classList.remove('hidden');
+        container.innerHTML = '';
+        return;
+    }
+    
+    try {
+        const deposits = await this.web3.getUserDeposits();
+        this.userDeposits = deposits;
         
-        if (!container || !emptyState) return;
+        const activeCount = deposits.filter(d => d.active).length;
+        if (navBadge) navBadge.textContent = activeCount;
         
-        if (!this.web3 || !this.web3.isConnected) {
+        if (deposits.length === 0) {
             emptyState.classList.remove('hidden');
             container.innerHTML = '';
             return;
         }
         
-        try {
-            const deposits = await this.web3.getUserDeposits();
-            this.userDeposits = deposits;
+        emptyState.classList.add('hidden');
+        
+        const t = CONFIG.TRANSLATIONS[this.currentLanguage];
+        
+        container.innerHTML = deposits.map((dep, index) => {
+            const tariff = this.tariffs[dep.tariffId] || this.tariffs[0];
+            const tariffName = this.currentLanguage === 'ru' ? tariff.name : tariff.name_en;
+            const dailyPercent = tariff.dailyPercent;
+            const dailyIncome = (parseFloat(dep.amount) * dailyPercent) / 100;
+            const startDate = new Date(dep.startTime * 1000);
+            const endDate = new Date((dep.startTime + tariff.duration * 24 * 60 * 60) * 1000);
+            const now = new Date();
+            const progress = Math.min(100, ((now - startDate) / (endDate - startDate)) * 100);
             
-            const activeCount = deposits.filter(d => d.active).length;
-            if (navBadge) navBadge.textContent = activeCount;
-            
-            if (deposits.length === 0) {
-                emptyState.classList.remove('hidden');
-                container.innerHTML = '';
-                return;
-            }
-            
-            emptyState.classList.add('hidden');
-            
-            const t = CONFIG.TRANSLATIONS[this.currentLanguage];
-            
-            container.innerHTML = deposits.map((dep, index) => {
-                const tariff = this.tariffs[dep.tariffId] || this.tariffs[0];
-                const tariffName = this.currentLanguage === 'ru' ? tariff.name : tariff.name_en;
-                const dailyPercent = tariff.dailyPercent;
-                const dailyIncome = (parseFloat(dep.amount) * dailyPercent) / 100;
-                const startDate = new Date(dep.startTime * 1000);
-                const endDate = new Date((dep.startTime + tariff.duration * 24 * 60 * 60) * 1000);
-                const now = new Date();
-                const progress = Math.min(100, ((now - startDate) / (endDate - startDate)) * 100);
-                
-                return `
-                    <div class="deposit-card" data-deposit-id="${index}">
-                        <div class="deposit-header">
-                            <div class="deposit-name">${tariffName}</div>
-                            <div class="deposit-status ${!dep.active ? 'finished' : ''}">
-                                ${dep.active ? t.filter_active : t.filter_finished}
-                            </div>
+            return `
+                <div class="deposit-card" data-deposit-id="${index}">
+                    <div class="deposit-header">
+                        <div class="deposit-name">${tariffName}</div>
+                        <div class="deposit-status ${!dep.active ? 'finished' : ''}">
+                            ${dep.active ? t.filter_active : t.filter_finished}
                         </div>
-                        <div class="deposit-stats-grid">
-                            <div class="deposit-stat">
-                                <span class="stat-label">${t.amount}</span>
-                                <span class="stat-number">${this.utils.formatNumber(dep.amount)} USDT</span>
-                            </div>
-                            <div class="deposit-stat">
-                                <span class="stat-label">${t.daily_income}</span>
-                                <span class="stat-number profit">${this.utils.formatNumber(dailyIncome)} USDT</span>
-                            </div>
-                            <div class="deposit-stat">
-                                <span class="stat-label">${t.start_date || 'Начало'}</span>
-                                <span class="stat-number">${startDate.toLocaleDateString()}</span>
-                            </div>
-                            <div class="deposit-stat">
-                                <span class="stat-label">${t.end_date}</span>
-                                <span class="stat-number">${endDate.toLocaleDateString()}</span>
-                            </div>
-                        </div>
-                        ${dep.active ? `
-                            <div class="deposit-progress">
-                                <div class="progress-header">
-                                    <span>${t.progress || 'Прогресс'}</span>
-                                    <span>${progress.toFixed(0)}%</span>
-                                </div>
-                                <div class="progress-track">
-                                    <div class="progress-fill" style="width: ${progress}%"></div>
-                                </div>
-                            </div>
-                            <div class="deposit-actions">
-                                <button class="deposit-btn withdraw" data-deposit-id="${index}">
-                                    <i class="fas fa-download"></i>
-                                    ${t.withdraw_income || 'Вывести'}
-                                </button>
-                            </div>
-                        ` : ''}
                     </div>
-                `;
-            }).join('');
-            
-            document.querySelectorAll('.deposit-btn.withdraw').forEach(btn => {
-                btn.addEventListener('click', async (e) => {
-                    const depositId = e.currentTarget.dataset.depositId;
-                    await this.withdrawFromDeposit(depositId);
-                });
+                    <div class="deposit-stats-grid">
+                        <div class="deposit-stat">
+                            <span class="stat-label">${t.amount}</span>
+                            <span class="stat-number">${this.utils.formatNumber(dep.amount)} USDT</span>
+                        </div>
+                        <div class="deposit-stat">
+                            <span class="stat-label">${t.daily_income}</span>
+                            <span class="stat-number profit">${this.utils.formatNumber(dailyIncome)} USDT</span>
+                        </div>
+                        <div class="deposit-stat">
+                            <span class="stat-label">${t.start_date || 'Начало'}</span>
+                            <span class="stat-number">${startDate.toLocaleDateString()}</span>
+                        </div>
+                        <div class="deposit-stat">
+                            <span class="stat-label">${t.end_date}</span>
+<span class="stat-number">${endDate.toLocaleDateString()}</span>
+                        </div>
+                    </div>
+                    ${dep.active ? `
+                        <div class="deposit-progress">
+                            <div class="progress-header">
+                                <span>${t.progress || 'Прогресс'}</span>
+                                <span>${progress.toFixed(0)}%</span>
+                            </div>
+                            <div class="progress-track">
+                                <div class="progress-fill" style="width: ${progress}%"></div>
+                            </div>
+                        </div>
+                        <div class="deposit-actions">
+                            <button class="deposit-btn collect" data-deposit-id="${index}">
+                                <i class="fas fa-coins"></i>
+                                ${t.collect_income || 'Собрать доход'}
+                            </button>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }).join('');
+        
+        // ИСПРАВЛЕНО: теперь кнопка просто переводит в Городскую казну
+        document.querySelectorAll('.deposit-btn.collect').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                this.showTab('treasury');
             });
-            
-        } catch (error) {
-            console.error('Error loading deposits:', error);
-            emptyState.classList.remove('hidden');
-            container.innerHTML = '';
-        }
+        });
+        
+    } catch (error) {
+        console.error('Error loading deposits:', error);
+        emptyState.classList.remove('hidden');
+        container.innerHTML = '';
     }
+}
 
     async withdrawFromDeposit(depositId) {
         if (!this.web3 || !this.web3.isConnected) {
@@ -1813,5 +1925,3 @@ window.app = null;
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new CryptoLandApp();
 });
-
-
