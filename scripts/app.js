@@ -1755,7 +1755,7 @@ async loadDeposits() {
                             ${dep.active ? t.filter_active : t.filter_finished}
                         </div>
                     </div>
-                    <div class="deposit-stats-grid">
+<div class="deposit-stats-grid">
                         <div class="deposit-stat">
                             <span class="stat-label">${t.amount}</span>
                             <span class="stat-number">${this.utils.formatNumber(dep.amount)} USDT</span>
@@ -1775,7 +1775,7 @@ async loadDeposits() {
                     </div>
                     ${dep.active ? `
                         <div class="deposit-progress">
-<div class="progress-header">
+                            <div class="progress-header">
                                 <span>${t.progress || 'Прогресс'}</span>
                                 <span>${progress.toFixed(0)}%</span>
                             </div>
@@ -1925,4 +1925,5 @@ window.app = null;
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new CryptoLandApp();
 });
+
 
