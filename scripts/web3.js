@@ -38,11 +38,16 @@ class CryptoLandWeb3 {
 
     async initWalletConnect() {
         try {
+            // ===== ИСПРАВЛЕНО: проверяем наличие библиотеки =====
             if (typeof window.WalletConnectProvider === 'undefined') {
-                throw new Error("Библиотека WalletConnect не загружена");
+                console.warn("WalletConnect библиотека не загружена, используем только MetaMask");
+                // Не падаем с ошибкой, а просто сообщаем и выходим
+                throw new Error("WalletConnect не поддерживается");
             }
             
-            const WalletConnectProvider = window.WalletConnectProvider.default;
+            // ===== ИСПРАВЛЕНО: безопасно получаем провайдер =====
+            const WalletConnectProvider = window.WalletConnectProvider.default || window.WalletConnectProvider;
+            
             const provider = new WalletConnectProvider({
                 rpc: {
                     97: "https://data-seed-prebsc-1-s1.binance.org:8545/",
@@ -112,9 +117,27 @@ class CryptoLandWeb3 {
                     window.app.updateConnectButton(false);
                 }
             } else {
+                const oldAccount = this.account;
                 this.account = accounts[0];
                 if (window.app) {
-                    window.app.updateUserInfo();
+                    window.app.utils.showNotification(
+                        window.app.currentLanguage === 'ru' ? 
+                        `Аккаунт изменен: ${this.formatAddress(this.account)}` : 
+                        `Account changed: ${this.formatAddress(this.account)}`, 
+                        'info'
+                    );
+                    window.app.refreshAllStats();
+                    
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const referrer = urlParams.get('ref');
+                    if (referrer && referrer.toLowerCase() !== this.account.toLowerCase()) {
+                        window.app.utils.showNotification(
+                            window.app.currentLanguage === 'ru' ? 
+                            'Реферальная ссылка не соответствует текущему аккаунту' : 
+                            'Referral link does not match current account', 
+                            'warning'
+                        );
+                    }
                 }
             }
         });
@@ -133,9 +156,27 @@ class CryptoLandWeb3 {
                     window.app.updateConnectButton(false);
                 }
             } else {
+                const oldAccount = this.account;
                 this.account = accounts[0];
                 if (window.app) {
-                    window.app.updateUserInfo();
+                    window.app.utils.showNotification(
+                        window.app.currentLanguage === 'ru' ? 
+                        `Аккаунт изменен: ${this.formatAddress(this.account)}` : 
+                        `Account changed: ${this.formatAddress(this.account)}`, 
+                        'info'
+                    );
+                    window.app.refreshAllStats();
+                    
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const referrer = urlParams.get('ref');
+                    if (referrer && referrer.toLowerCase() !== this.account.toLowerCase()) {
+                        window.app.utils.showNotification(
+                            window.app.currentLanguage === 'ru' ? 
+                            'Реферальная ссылка не соответствует текущему аккаунту' : 
+                            'Referral link does not match current account', 
+                            'warning'
+                        );
+                    }
                 }
             }
         });
@@ -174,6 +215,47 @@ class CryptoLandWeb3 {
         } catch (error) {
             console.error("MetaMask connection error:", error);
             throw error;
+        }
+    }
+
+    async switchToAccount(targetAccount) {
+        if (!window.ethereum || this.walletType !== 'metamask') {
+            console.log('Switch account only available for MetaMask');
+            return false;
+        }
+        
+        try {
+            const accounts = await window.ethereum.request({
+                method: 'eth_requestAccounts'
+            });
+            
+            const targetLower = targetAccount.toLowerCase();
+            const found = accounts.some(acc => acc.toLowerCase() === targetLower);
+            
+            if (found) {
+                if (window.app) {
+                    window.app.utils.showNotification(
+                        window.app.currentLanguage === 'ru' ? 
+                        `Пожалуйста, переключитесь на аккаунт ${this.formatAddress(targetAccount)} в MetaMask` : 
+                        `Please switch to account ${this.formatAddress(targetAccount)} in MetaMask`, 
+                        'warning'
+                    );
+                }
+                return false;
+            } else {
+                if (window.app) {
+                    window.app.utils.showNotification(
+                        window.app.currentLanguage === 'ru' ? 
+                        'Аккаунт не найден в MetaMask' : 
+                        'Account not found in MetaMask', 
+                        'error'
+                    );
+                }
+                return false;
+            }
+        } catch (error) {
+            console.error('Error switching account:', error);
+            return false;
         }
     }
 
@@ -216,9 +298,7 @@ class CryptoLandWeb3 {
     }
 
     async initContracts() {
-        // Полный ABI контракта с новыми функциями
         const contractABI = [
-            // View functions
             {
                 "inputs": [{"name": "user", "type": "address"}],
                 "name": "getUserStats",
@@ -308,7 +388,6 @@ class CryptoLandWeb3 {
                 "stateMutability": "view",
                 "type": "function"
             },
-            // Write functions
             {
                 "inputs": [
                     {"name": "amount", "type": "uint256"},
@@ -362,7 +441,6 @@ class CryptoLandWeb3 {
                 "stateMutability": "nonpayable",
                 "type": "function"
             },
-            // События
             {
                 "anonymous": false,
                 "inputs": [
@@ -483,18 +561,11 @@ class CryptoLandWeb3 {
         this.usdtContract = new this.web3.eth.Contract(usdtABI, usdtAddress);
     }
 
-    // ============ ИСПРАВЛЕННАЯ ФУНКЦИЯ ============
-    
-    /**
-     * ПОЛУЧАЕТ ОБЩЕЕ КОЛИЧЕСТВО РЕФЕРАЛОВ ИЗ КОНТРАКТА (СУММА ПО УРОВНЯМ)
-     */
     async getTotalReferralsCount(address) {
         if (!this.contract) return 0;
         
         try {
-            // Используем функцию getReferralStats из контракта
             const stats = await this.contract.methods.getReferralStats(address).call();
-            // totalReferrals - это ОБЩЕЕ количество рефералов (сумма по уровням)
             return parseInt(stats.totalReferrals);
         } catch (error) {
             console.error('Error getting total referrals count:', error);
@@ -502,9 +573,6 @@ class CryptoLandWeb3 {
         }
     }
     
-    /**
-     * Получает общую сумму всех полученных реферальных начислений
-     */
     async getTotalReferralEarned(address) {
         if (!this.contract) return '0';
         
@@ -530,9 +598,6 @@ class CryptoLandWeb3 {
         }
     }
     
-    /**
-     * Получает общую сумму всех полученных процентов
-     */
     async getTotalInterestEarned(address) {
         if (!this.contract) return '0';
         
@@ -557,8 +622,6 @@ class CryptoLandWeb3 {
             return '0';
         }
     }
-
-    // ============ ОСНОВНЫЕ ФУНКЦИИ ============
 
     async invest(amount, tariffId, referrer) {
         const weiAmount = this.web3.utils.toWei(amount.toString(), 'ether');
@@ -631,8 +694,6 @@ class CryptoLandWeb3 {
                 gas: 500000
             });
     }
-
-    // ============ VIEW ФУНКЦИИ ============
 
     async getUserStats() {
         try {
@@ -745,8 +806,6 @@ class CryptoLandWeb3 {
         }
     }
 
-    // ============ ФУНКЦИИ ДЛЯ ИСТОРИИ ============
-    
     async getTransactionHistory(userAddress, fromBlock = 0, toBlock = 'latest') {
         if (!this.contract) return [];
         
@@ -844,8 +903,6 @@ class CryptoLandWeb3 {
         }
     }
 
-    // ============ ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ============
-
     getContractAddress() {
         return CONFIG.CONTRACT_ADDRESS;
     }
@@ -864,5 +921,4 @@ class CryptoLandWeb3 {
     }
 }
 
-// Глобальный экземпляр
 window.cryptoLandWeb3 = new CryptoLandWeb3();
