@@ -1770,12 +1770,12 @@ async loadDeposits() {
                         </div>
                         <div class="deposit-stat">
                             <span class="stat-label">${t.end_date}</span>
-<span class="stat-number">${endDate.toLocaleDateString()}</span>
+                            <span class="stat-number">${endDate.toLocaleDateString()}</span>
                         </div>
                     </div>
                     ${dep.active ? `
                         <div class="deposit-progress">
-                            <div class="progress-header">
+<div class="progress-header">
                                 <span>${t.progress || 'Прогресс'}</span>
                                 <span>${progress.toFixed(0)}%</span>
                             </div>
@@ -1794,7 +1794,7 @@ async loadDeposits() {
             `;
         }).join('');
         
-        // ИСПРАВЛЕНО: теперь кнопка просто переводит в Городскую казну
+        // Обработчики для кнопок
         document.querySelectorAll('.deposit-btn.collect').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 this.showTab('treasury');
@@ -1925,3 +1925,4 @@ window.app = null;
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new CryptoLandApp();
 });
+
