@@ -1671,73 +1671,73 @@ class CryptoLandApp {
     }
 
     // ===== ИСПРАВЛЕННАЯ ФУНКЦИЯ LOADDEPOSITS =====
-    async loadDeposits() {
-        const container = document.getElementById('depositsGrid');
-        const emptyState = document.getElementById('emptyDeposits');
-        const navBadge = document.getElementById('navDepositCount');
+async loadDeposits() {
+    const container = document.getElementById('depositsGrid');
+    const emptyState = document.getElementById('emptyDeposits');
+    const navBadge = document.getElementById('navDepositCount');
+    
+    if (!container || !emptyState) return;
+    
+    if (!this.web3 || !this.web3.isConnected) {
+        emptyState.classList.remove('hidden');
+        container.innerHTML = '';
+        return;
+    }
+    
+    try {
+        const deposits = await this.web3.getUserDeposits();
+        this.userDeposits = deposits;
         
-        if (!container || !emptyState) return;
+        const activeCount = deposits.filter(d => d.active).length;
+        if (navBadge) navBadge.textContent = activeCount;
         
-        if (!this.web3 || !this.web3.isConnected) {
+        if (deposits.length === 0) {
             emptyState.classList.remove('hidden');
             container.innerHTML = '';
             return;
         }
         
-        try {
-            const deposits = await this.web3.getUserDeposits();
-            this.userDeposits = deposits;
+        emptyState.classList.add('hidden');
+        
+        const t = CONFIG.TRANSLATIONS[this.currentLanguage];
+        
+        container.innerHTML = deposits.map((dep, index) => {
+            const tariff = this.tariffs[dep.tariffId] || this.tariffs[0];
+            const tariffName = this.currentLanguage === 'ru' ? tariff.name : tariff.name_en;
+            const dailyPercent = tariff.dailyPercent;
+            const dailyIncome = (parseFloat(dep.amount) * dailyPercent) / 100;
+            const startDate = new Date(dep.startTime * 1000);
+            const endDate = new Date((dep.startTime + tariff.duration * 24 * 60 * 60) * 1000);
+            const now = new Date();
+            const progress = Math.min(100, ((now - startDate) / (endDate - startDate)) * 100);
             
-            const activeCount = deposits.filter(d => d.active).length;
-            if (navBadge) navBadge.textContent = activeCount;
-            
-            if (deposits.length === 0) {
-                emptyState.classList.remove('hidden');
-                container.innerHTML = '';
-                return;
-            }
-            
-            emptyState.classList.add('hidden');
-            
-            const t = CONFIG.TRANSLATIONS[this.currentLanguage];
-            
-            container.innerHTML = deposits.map((dep, index) => {
-                const tariff = this.tariffs[dep.tariffId] || this.tariffs[0];
-                const tariffName = this.currentLanguage === 'ru' ? tariff.name : tariff.name_en;
-                const dailyPercent = tariff.dailyPercent;
-                const dailyIncome = (parseFloat(dep.amount) * dailyPercent) / 100;
-                const startDate = new Date(dep.startTime * 1000);
-                const endDate = new Date((dep.startTime + tariff.duration * 24 * 60 * 60) * 1000);
-                const now = new Date();
-                const progress = Math.min(100, ((now - startDate) / (endDate - startDate)) * 100);
-                
-                return `
-                    <div class="deposit-card" data-deposit-id="${index}">
-                        <div class="deposit-header">
-                            <div class="deposit-name">${tariffName}</div>
-                            <div class="deposit-status ${!dep.active ? 'finished' : ''}">
-                                ${dep.active ? t.filter_active : t.filter_finished}
-                            </div>
+            return `
+                <div class="deposit-card" data-deposit-id="${index}">
+                    <div class="deposit-header">
+                        <div class="deposit-name">${tariffName}</div>
+                        <div class="deposit-status ${!dep.active ? 'finished' : ''}">
+                            ${dep.active ? t.filter_active : t.filter_finished}
                         </div>
-                        <div class="deposit-stats-grid">
-                            <div class="deposit-stat">
-                                <span class="stat-label">${t.amount}</span>
-                                <span class="stat-number">${this.utils.formatNumber(dep.amount)} USDT</span>
-                            </div>
-                            <div class="deposit-stat">
-                                <span class="stat-label">${t.daily_income}</span>
-                                <span class="stat-number profit">${this.utils.formatNumber(dailyIncome)} USDT</span>
-                            </div>
-                            <div class="deposit-stat">
-                                <span class="stat-label">${t.start_date || 'Начало'}</span>
-                                <span class="stat-number">${startDate.toLocaleDateString()}</span>
-                            </div>
-                            <div class="deposit-stat">
-                                <span class="stat-label">${t.end_date}</span>
-                                <span class="stat-number">${endDate.toLocaleDateString()}</span>
-                            </div>
+                    </div>
+                    <div class="deposit-stats-grid">
+                        <div class="deposit-stat">
+                            <span class="stat-label">${t.amount}</span>
+                            <span class="stat-number">${this.utils.formatNumber(dep.amount)} USDT</span>
                         </div>
-                        ${dep.active ? `
+                        <div class="deposit-stat">
+                            <span class="stat-label">${t.daily_income}</span>
+                            <span class="stat-number profit">${this.utils.formatNumber(dailyIncome)} USDT</span>
+                        </div>
+                        <div class="deposit-stat">
+                            <span class="stat-label">${t.start_date || 'Начало'}</span>
+                            <span class="stat-number">${startDate.toLocaleDateString()}</span>
+                        </div>
+                        <div class="deposit-stat">
+                            <span class="stat-label">${t.end_date}</span>
+                            <span class="stat-number">${endDate.toLocaleDateString()}</span>
+                        </div>
+                    </div>
+                    ${dep.active ? `
                         <div class="deposit-progress">
                             <div class="progress-header">
                                 <span>${t.progress || 'Прогресс'}</span>
@@ -1748,28 +1748,28 @@ class CryptoLandApp {
                             </div>
                         </div>
                         <div class="deposit-actions">
-                            <button class="deposit-btn collect" data-deposit-id="${index}">
+<button class="deposit-btn collect" data-deposit-id="${index}">
                                 <i class="fas fa-coins"></i>
                                 ${t.collect_income || 'Собрать доход'}
                             </button>
                         </div>
-                        ` : ''}
-                    </div>
-                `;
-            }).join('');
-            
-            document.querySelectorAll('.deposit-btn.collect').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    this.showTab('treasury');
-                });
+                    ` : ''}
+                </div>
+            `;
+        }).join('');
+        
+        document.querySelectorAll('.deposit-btn.collect').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                this.showTab('treasury');
             });
-            
-        } catch (error) {
-            console.error('Error loading deposits:', error);
-            emptyState.classList.remove('hidden');
-            container.innerHTML = '';
-        }
+        });
+        
+    } catch (error) {
+        console.error('Error loading deposits:', error);
+        emptyState.classList.remove('hidden');
+        container.innerHTML = '';
     }
+}
 
     async withdrawFromDeposit(depositId) {
         if (!this.web3 || !this.web3.isConnected) {
@@ -1888,3 +1888,4 @@ window.app = null;
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new CryptoLandApp();
 });
+
