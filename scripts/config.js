@@ -41,7 +41,7 @@ const CONFIG = {
     MAYOR_PHRASES: {
         ru: [
             "Развивайте свой город и приглашай новых жителей!",
-            "Отслеживай историю операций и денежные движения в Городской казне",
+            "Отслеживай историю операций и денежные движения в Городской казне.",
             "Каждая инвестиция делает мегаполис сильнее.",
             "Вместе мы построим лучший крипто-город!",
             "Пополняй бюджет города и он принесет тебе доход с процентами!",
@@ -49,21 +49,24 @@ const CONFIG = {
             "Стань лучшим мэром! Следи за своим рейтингом.",
             "Чем больше заполнены уровни, тем больше возможностей.",
             "Ваш город — ваши правила!",
-            "Контролируй налоговые сборы с жителей города в Налоговой",
+            "Контролируй налоговые сборы с жителей города в Налоговой.",
             "Чем больше доход ваших жителей,тем больше зарабатываете вы!",
             "Сегодняшние вложения — завтрашний успех!"
         ],
         en: [
-            "Develop your city, and residents will be grateful!",
+            "Develop your city and invite new residents!",
+            "Track the history of transactions and cash flows in the City Treasury.",
             "Every investment makes the metropolis stronger.",
             "Together we will build the best crypto city!",
-            "Referrals are not just residents, they are your team.",
-            "The golden district is waiting for its mayor!",
-            "Passive income is the key to financial freedom.",
-            "The higher the level, the more opportunities.",
+            "Fill the city budget and it will bring you income with interest!",
+            "The Golden District is waiting for its mayor!",
+            "Become the best mayor! Track your rating.",
+            "The more levels are filled, the more possibilities."
             "Your city - your rules!",
-            "Invest wisely, develop with us.",
-            "Today's investments are tomorrow's success!"
+            "Control tax collection from city residents at the Tax Office.",
+            "The more your residents' income, the more you earn!",
+            "Today's investment is tomorrow's success!"
+            
         ]
     },
     
@@ -141,6 +144,7 @@ const CONFIG = {
             summary_earned: "Заработано всего",
             summary_available: "Доступно к выводу",
             empty_title: "У вас пока нет районов",
+            collect_income: "Собрать доход",
             empty_text: "Начните инвестировать в развитие мегаполиса",
             
             // Городская казна
@@ -338,6 +342,7 @@ const CONFIG = {
             summary_earned: "Total earned",
             summary_available: "Available for withdrawal",
             empty_title: "You have no districts yet",
+            collect_income: "Collect income",
             empty_text: "Start investing in metropolis development",
             
             // Treasury
@@ -509,6 +514,7 @@ CONFIG.getContractABI = async function() {
 };
 
 window.CONFIG = CONFIG;
+
 
 
 
